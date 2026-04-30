@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Udyam Registration JSON Generator</title>
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-dark: #1240a8;
+    --primary-light: #e8f0fe;
+    --success: #0e7c4a;
+    --success-bg: #e6f4ee;
+    --danger: #c0392b;
+    --danger-bg: #fdecea;
+    --border: #d1d5db;
+    --border-focus: #1a56db;
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --label: #374151;
+    --section-header: #1e3a5f;
+    --accent: #f0f4ff;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --radius: 8px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .top-bar {
+    background: linear-gradient(135deg, #1a3c6e 0%, #1a56db 100%);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(26,86,219,0.18);
+  }
+
+  .top-bar .logo {
+    width: 42px; height: 42px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; letter-spacing: -1px;
+  }
+
+  .top-bar h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.2px; }
+  .top-bar p { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+  .top-bar .actions { margin-left: auto; display: flex; gap: 10px; }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  .btn-primary { background: #fff; color: var(--primary); }
+  .btn-primary:hover { background: #e8f0fe; }
+  .btn-outline { background: rgba(255,255,255,0.12); color: #fff; border: 1.5px solid rgba(255,255,255,0.35); }
+  .btn-outline:hover { background: rgba(255,255,255,0.22); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #a93226; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #0a5e37; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-icon { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--muted); }
+  .btn-icon:hover { background: #f0f0f0; color: var(--danger); }
+
+  .layout { display: flex; min-height: calc(100vh - 70px); }
+
+  .sidebar {
+    width: 230px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 18px 10px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px;
+    font-size: 13px;
+    color: var(--label);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: var(--accent); color: var(--primary); }
+  .nav-item.active { background: var(--accent); color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
+  .nav-item .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .nav-item.active .dot, .nav-item.done .dot { background: var(--primary); }
+  .nav-item.done { color: var(--success); }
+  .nav-item.done .dot { background: var(--success); }
+
+  .main { flex: 1; padding: 28px 36px; overflow-y: auto; max-width: 900px; }
+
+  .section {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .section-head {
+    background: var(--section-header);
+    color: #fff;
+    padding: 14px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+    letter-spacing: 0.2px;
+  }
+
+  .section-head .icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .section-body { padding: 22px; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--label); letter-spacing: 0.2px; }
+  .field label .req { color: var(--danger); margin-left: 2px; }
+
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"],
+  select, textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--text);
+    background: #fff;
+    font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+  }
+
+  input.error, select.error { border-color: var(--danger); }
+
+  .hint { font-size: 11px; color: var(--muted); }
+  .err-msg { font-size: 11px; color: var(--danger); }
+
+  .divider { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
+
+  .sub-section {
+    background: #f8faff;
+    border: 1px solid #dde6f7;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+  }
+
+  .sub-section-title {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--primary);
+    margin-bottom: 14px;
+  }
+
+  .unit-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .unit-card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .unit-tag {
+    background: var(--primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .add-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--accent);
+    color: var(--primary);
+    border: 1.5px dashed var(--primary);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    transition: all 0.15s;
+  }
+
+  .add-btn:hover { background: #dbeafe; }
+
+  .output-panel {
+    position: fixed;
+    right: 0; top: 70px;
+    width: 420px;
+    height: calc(100vh - 70px);
+    background: #1a1d23;
+    border-left: 1px solid #2d3748;
+    display: flex;
+    flex-direction: column;
+    z-index: 99;
+    transition: transform 0.3s ease;
+  }
+
+  .output-panel.hidden { transform: translateX(100%); }
+
+  .output-head {
+    padding: 14px 18px;
+    background: #111827;
+    border-bottom: 1px solid #2d3748;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .output-head h3 { color: #e2e8f0; font-size: 14px; font-weight: 600; }
+  .output-head .close-btn { margin-left: auto; background: none; border: none; color: #6b7280; cursor: pointer; font-size: 18px; padding: 2px 8px; border-radius: 4px; }
+  .output-head .close-btn:hover { background: #2d3748; color: #fff; }
+
+  .output-toolbar {
+    padding: 10px 14px;
+    display: flex; gap: 8px;
+    background: #1a1d23;
+    border-bottom: 1px solid #2d3748;
+  }
+
+  .output-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+  }
+
+  .output-body pre {
+    color: #a8d8b9;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .json-key { color: #7dd3fc; }
+  .json-str { color: #86efac; }
+  .json-num { color: #fde68a; }
+  .json-bool { color: #f9a8d4; }
+  .json-null { color: #94a3b8; }
+
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: #111827;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1000;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left: 4px solid #10b981; }
+  .toast.error { border-left: 4px solid var(--danger); }
+
+  .progress-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #60a5fa;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-info { background: #dbeafe; color: #1d4ed8; }
+
+  @media (max-width: 1100px) {
+    .output-panel { width: 100%; }
+    .sidebar { display: none; }
+  }
+
+  @media (max-width: 768px) {
+    .main { padding: 16px; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .top-bar { padding: 14px 16px; }
+  }
+
+  .required-note { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+  .field-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    margin-top: 6px;
+  }
+
+  .toggle-output-btn {
+    position: fixed;
+    right: 28px;
+    bottom: 90px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 98;
+    box-shadow: 0 4px 16px rgba(26,86,219,0.35);
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.18s;
+  }
+  .toggle-output-btn:hover { background: var(--primary-dark); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo">U</div>
+  <div>
+    <h1>Udyam Registration</h1>
+    <p>JSON Payload Generator</p>
+  </div>
+  <div class="actions">
+    <button class="btn btn-outline" onclick="loadSampleData()">&#8635; Load Sample</button>
+    <button class="btn btn-outline" onclick="resetForm()">&#9003; Reset</button>
+    <button class="btn btn-primary" onclick="generateJSON()">&#10003; Generate JSON</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Sections</div>
+    <a class="nav-item active" onclick="scrollTo('sec-personal')"><span class="dot"></span>Personal Info</a>
+    <a class="nav-item" onclick="scrollTo('sec-org')"><span class="dot"></span>Organisation</a>
+    <a class="nav-item" onclick="scrollTo('sec-address')"><span class="dot"></span>Official Address</a>
+    <a class="nav-item" onclick="scrollTo('sec-units')"><span class="dot"></span>Plant Units</a>
+    <a class="nav-item" onclick="scrollTo('sec-financial')"><span class="dot"></span>Financial Details</a>
+    <a class="nav-item" onclick="scrollTo('sec-bank')"><span class="dot"></span>Bank Details</a>
+    <a class="nav-item" onclick="scrollTo('sec-activity')"><span class="dot"></span>Activity & NIC</a>
+    <a class="nav-item" onclick="scrollTo('sec-employees')"><span class="dot"></span>Employees</a>
+    <div style="margin-top:20px; padding: 0 18px;">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="generateJSON()">Generate JSON</button>
+    </div>
+  </nav>
+
+  <!-- MAIN FORM -->
+  <main class="main" id="main-scroll">
+    <p class="required-note"><span style="color:var(--danger)">*</span> Required fields</p>
+
+    <!-- SECTION 1: Personal -->
+    <div class="section" id="sec-personal">
+      <div class="section-head"><div class="icon">👤</div>Personal Information</div>
+      <div class="section-body">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Aadhaar Name <span class="req">*</span></label>
+            <input type="text" id="aadhaar_name" placeholder="Name as on Aadhaar">
+          </div>
+          <div class="field">
+            <label>Aadhaar Number <span class="req">*</span></label>
+            <input type="text" id="aadhaar_number" placeholder="12-digit Aadhaar" maxlength="12">
+            <span class="hint">12-digit number without spaces</span>
+          </div>
+          <div class="field">
+            <label>Date of Birth <span class="req">*</span></label>
+            <input type="text" id="dob" placeholder="DD/MM/YYYY">
+            <span class="hint">Format: DD/MM/YYYY</span>
+          </div>
+          <div class="field">
+            <label>Gender <span class="req">*</span></label>
+            <select id="gender">
+              <option value="">Select Gender</option>
+              <option value="1">Male</option>
+              <option value="2">Female</option>
+              <option value="3">Transgender</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Social Category <span class="req">*</span></label>
+            <select id="social_category">
+              <option value="">Select Category</option>
+              <option value="1">General</option>
+              <option value="2">SC</option>
+              <option value="3">ST</option>
+              <option value="4">OBC</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Divyang (Specially Abled)</label>
+            <select id="divyang">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Mobile <span class="req">*</span></label>
+            <input type="text" id="mobile" placeholder="10-digit mobile number" maxlength="10">
+          </div>
+          <div class="field">
+            <label>Email <span class="req">*</span></label>
+            <input type="email" id="email" placeholder="email@example.com">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Organisation -->
+    <div class="section" id="sec-org">
+      <div class="section-head"><div class="icon">🏢</div>Organisation Details</div>
+      <div class="section-body">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Organisation Type <span class="req">*</span></label>
+            <select id="org_type">
+              <option value="">Select Type</option>
+              <option value="1">Proprietorship</option>
+              <option value="2">Partnership</option>
+              <option value="3">Hindu Undivided Family</option>
+              <option value="4">Co-operative Society</option>
+              <option value="5">Private Limited Company</option>
+              <option value="6">Public Limited Company</option>
+              <option value="7">LLP</option>
+              <option value="8">Self Help Group</option>
+              <option value="9">Others</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Company / Enterprise Name <span class="req">*</span></label>
+            <input type="text" id="company_name" placeholder="Name of enterprise">
+          </div>
+          <div class="field">
+            <label>PAN Number <span class="req">*</span></label>
+            <input type="text" id="pan_number" placeholder="10-char PAN" maxlength="10">
+          </div>
+          <div class="field">
+            <label>PAN Name</label>
+            <input type="text" id="pan_name" placeholder="Name as on PAN">
+          </div>
+          <div class="field">
+            <label>Incorporation Date <span class="req">*</span></label>
+            <input type="text" id="incorporation_date" placeholder="DD/MM/YYYY">
+          </div>
+          <div class="field">
+            <label>Major Activity <span class="req">*</span></label>
+            <select id="major_activity">
+              <option value="">Select Activity</option>
+              <option value="1">Manufacturing</option>
+              <option value="2">Services</option>
+              <option value="3">Trading</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Commenced Operations</label>
+            <select id="commenced">
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+          <div class="field" id="commencement_date_field">
+            <label>Commencement Date</label>
+            <input type="text" id="commencement_date" placeholder="DD/MM/YYYY">
+          </div>
+          <div class="field">
+            <label>Previous EM / UAM No.</label>
+            <input type="text" id="previous_em" placeholder="0 if none">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Official Address -->
+    <div class="section" id="sec-address">
+      <div class="section-head"><div class="icon">📍</div>Official Address</div>
+      <div class="section-body">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Flat / Door No. <span class="req">*</span></label>
+            <input type="text" id="addr_flat" placeholder="Flat/Door number">
+          </div>
+          <div class="field">
+            <label>Building Name</label>
+            <input type="text" id="addr_building" placeholder="Building name">
+          </div>
+          <div class="field">
+            <label>Village / Town <span class="req">*</span></label>
+            <input type="text" id="addr_village" placeholder="Village or town name">
+          </div>
+          <div class="field">
+            <label>Block</label>
+            <input type="text" id="addr_block" placeholder="Block name">
+          </div>
+          <div class="field">
+            <label>Road / Street</label>
+            <input type="text" id="addr_road" placeholder="Road / street name">
+          </div>
+          <div class="field">
+            <label>City <span class="req">*</span></label>
+            <input type="text" id="addr_city" placeholder="City">
+          </div>
+          <div class="field">
+            <label>PIN Code <span class="req">*</span></label>
+            <input type="text" id="addr_pin" placeholder="6-digit PIN" maxlength="6">
+          </div>
+          <div class="field">
+            <label>State Code <span class="req">*</span></label>
+            <input type="text" id="addr_state" placeholder="e.g. 33 for Tamil Nadu">
+            <span class="hint">NIC state code</span>
+          </div>
+          <div class="field">
+            <label>District Code <span class="req">*</span></label>
+            <input type="text" id="addr_district" placeholder="e.g. 582">
+            <span class="hint">NIC district code</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Units -->
+    <div class="section" id="sec-units">
+      <div class="section-head">
+        <div class="icon">🏭</div>Plant / Unit Locations
+        <span class="badge badge-info" style="margin-left:auto;" id="unit-count-badge">0 Units</span>
+      </div>
+      <div class="section-body">
+        <p class="hint" style="margin-bottom:14px;">Add one or more plant/unit locations. Each unit requires a unique identifier key.</p>
+        <div id="units-container"></div>
+        <button class="add-btn" onclick="addUnit()">+ Add Plant / Unit</button>
+      </div>
+    </div>
+
+    <!-- SECTION 5: Financial -->
+    <div class="section" id="sec-financial">
+      <div class="section-head"><div class="icon">💰</div>Financial Details</div>
+      <div class="section-body">
+        <div class="grid grid-3">
+          <div class="field">
+            <label>WDV (Written Down Value)</label>
+            <input type="number" id="wdv" placeholder="0" min="0">
+            <span class="hint">In INR Lakhs</span>
+          </div>
+          <div class="field">
+            <label>Exclusion Cost</label>
+            <input type="number" id="exclusion_cost" placeholder="0" min="0">
+          </div>
+          <div class="field">
+            <label>Total Turnover</label>
+            <input type="number" id="total_turnover" placeholder="0" min="0">
+            <span class="hint">In INR Lakhs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Bank -->
+    <div class="section" id="sec-bank">
+      <div class="section-head"><div class="icon">🏦</div>Bank Details</div>
+      <div class="section-body">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Bank Name <span class="req">*</span></label>
+            <input type="text" id="bank_name" placeholder="e.g. STATE BANK OF INDIA">
+          </div>
+          <div class="field">
+            <label>IFSC Code <span class="req">*</span></label>
+            <input type="text" id="ifsc" placeholder="11-char IFSC" maxlength="11">
+          </div>
+          <div class="field" style="grid-column: 1 / -1;">
+            <label>Account Number <span class="req">*</span></label>
+            <input type="text" id="account_number" placeholder="Bank account number">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 7: NIC Activity -->
+    <div class="section" id="sec-activity">
+      <div class="section-head"><div class="icon">📋</div>NIC Activity</div>
+      <div class="section-body">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>NIC Activity Code <span class="req">*</span></label>
+            <input type="text" id="nic_activity" placeholder="e.g. 3">
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="field-group-label">NIC Code Hierarchy</div>
+        <div class="grid grid-3">
+          <div class="field">
+            <label>NIC 2-digit Code</label>
+            <input type="text" id="nic2" placeholder="e.g. 45" maxlength="2">
+          </div>
+          <div class="field">
+            <label>NIC 4-digit Code</label>
+            <input type="text" id="nic4" placeholder="e.g. 4510" maxlength="4">
+          </div>
+          <div class="field">
+            <label>NIC 5-digit Code</label>
+            <input type="text" id="nic5" placeholder="e.g. 45101" maxlength="5">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 8: Employees -->
+    <div class="section" id="sec-employees">
+      <div class="section-head"><div class="icon">👥</div>Employee Count</div>
+      <div class="section-body">
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Male Employees</label>
+            <input type="number" id="emp_male" placeholder="0" min="0">
+          </div>
+          <div class="field">
+            <label>Female Employees</label>
+            <input type="number" id="emp_female" placeholder="0" min="0">
+          </div>
+          <div class="field">
+            <label>Others</label>
+            <input type="number" id="emp_others" placeholder="0" min="0">
+          </div>
+        </div>
+        <div style="margin-top:14px; padding:12px 16px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; font-size:13px; color:#15803d;">
+          Total Employees: <strong id="total-emp">0</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:40px;"></div>
+  </main>
+</div>
+
+<!-- OUTPUT PANEL -->
+<div class="output-panel hidden" id="output-panel">
+  <div class="output-head">
+    <span style="font-size:14px;">&#123;&#125;</span>
+    <h3>Generated JSON Payload</h3>
+    <button class="close-btn" onclick="toggleOutput()">✕</button>
+  </div>
+  <div class="output-toolbar">
+    <button class="btn btn-sm btn-success" onclick="copyJSON()">📋 Copy JSON</button>
+    <button class="btn btn-sm btn-outline" style="background:#2d3748;color:#e2e8f0;border:1px solid #4b5563;" onclick="downloadJSON()">⬇ Download</button>
+    <button class="btn btn-sm" style="background:#374151;color:#e2e8f0;border:none;" onclick="regenerate()">↺ Refresh</button>
+  </div>
+  <div class="output-body">
+    <pre id="json-output">// Click "Generate JSON" to build the payload</pre>
+  </div>
+</div>
+
+<!-- Toggle Button -->
+<button class="toggle-output-btn" id="toggle-btn" onclick="generateJSON()" style="display:none;">⚡ Generate JSON</button>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let unitCount = 0;
+  let units = {};
+
+  function scrollTo(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Employee total
+  ['emp_male','emp_female','emp_others'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateEmpTotal);
+  });
+
+  function updateEmpTotal() {
+    const m = parseInt(document.getElementById('emp_male').value)||0;
+    const f = parseInt(document.getElementById('emp_female').value)||0;
+    const o = parseInt(document.getElementById('emp_others').value)||0;
+    document.getElementById('total-emp').textContent = m + f + o;
+  }
+
+  // Commenced toggle
+  document.getElementById('commenced').addEventListener('change', function() {
+    const f = document.getElementById('commencement_date_field');
+    f.style.display = this.value === '1' ? 'flex' : 'none';
+  });
+
+  function addUnit(data) {
+    unitCount++;
+    const unitKey = data ? data.key : 'UNIT' + unitCount;
+    units[unitKey] = true;
+    updateUnitBadge();
+
+    const c = document.getElementById('units-container');
+    const div = document.createElement('div');
+    div.className = 'unit-card';
+    div.id = 'unit-card-' + unitKey;
+
+    const d = data || {};
+    div.innerHTML = `
+      <div class="unit-card-head">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="unit-tag">Unit #${unitCount}</span>
+          <input type="text" value="${d.key||unitKey}" placeholder="Unit Key (e.g. ABC)" 
+            style="width:120px;font-size:12px;font-weight:700;border:1.5px solid #c7d2fe;background:#eef2ff;color:#3730a3;"
+            id="unit-key-${unitKey}" onchange="renameUnit('${unitKey}', this)">
+        </div>
+        <button class="btn-icon" title="Remove unit" onclick="removeUnit('${unitKey}', this.closest('.unit-card'))">🗑</button>
+      </div>
+      <div class="grid grid-2">
+        <div class="field"><label>Flat / Door No.</label><input type="text" id="u_${unitKey}_flat" placeholder="Flat/Door" value="${d.flat||''}"></div>
+        <div class="field"><label>Building</label><input type="text" id="u_${unitKey}_building" placeholder="Building" value="${d.building||''}"></div>
+        <div class="field"><label>Village / Town</label><input type="text" id="u_${unitKey}_village" placeholder="Village" value="${d.village||''}"></div>
+        <div class="field"><label>Block</label><input type="text" id="u_${unitKey}_block" placeholder="Block" value="${d.block||''}"></div>
+        <div class="field"><label>Road</label><input type="text" id="u_${unitKey}_road" placeholder="Road" value="${d.road||''}"></div>
+        <div class="field"><label>City</label><input type="text" id="u_${unitKey}_city" placeholder="City" value="${d.city||''}"></div>
+        <div class="field"><label>PIN Code</label><input type="text" id="u_${unitKey}_pin" placeholder="PIN" maxlength="6" value="${d.pin||''}"></div>
+        <div class="field"><label>State Code</label><input type="text" id="u_${unitKey}_state" placeholder="State code" value="${d.state||''}"></div>
+        <div class="field"><label>District Code</label><input type="text" id="u_${unitKey}_district" placeholder="District code" value="${d.district||''}"></div>
+      </div>
+    `;
+    c.appendChild(div);
+  }
+
+  function renameUnit(oldKey, input) {
+    const newKey = input.value.trim();
+    if (!newKey || newKey === oldKey) return;
+    // Rename all field IDs
+    ['flat','building','village','block','road','city','pin','state','district'].forEach(f => {
+      const el = document.getElementById(`u_${oldKey}_${f}`);
+      if (el) el.id = `u_${newKey}_${f}`;
+    });
+    delete units[oldKey];
+    units[newKey] = true;
+    const card = document.getElementById('unit-card-' + oldKey);
+    if (card) card.id = 'unit-card-' + newKey;
+    const keyInput = document.getElementById('unit-key-' + oldKey);
+    if (keyInput) keyInput.id = 'unit-key-' + newKey;
+  }
+
+  function removeUnit(key, card) {
+    delete units[key];
+    card.remove();
+    updateUnitBadge();
+  }
+
+  function updateUnitBadge() {
+    document.getElementById('unit-count-badge').textContent = Object.keys(units).length + ' Units';
+  }
+
+  function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function buildJSON() {
+    const commenced = getVal('commenced');
+    const unitsObj = {};
+
+    Object.keys(units).forEach(key => {
+      const unitKey = document.getElementById('unit-key-' + key);
+      const k = unitKey ? unitKey.value.trim() : key;
+      unitsObj[k] = {
+        flat: getVal(`u_${key}_flat`),
+        building: getVal(`u_${key}_building`),
+        village: getVal(`u_${key}_village`),
+        block: getVal(`u_${key}_block`),
+        road: getVal(`u_${key}_road`),
+        city: getVal(`u_${key}_city`),
+        pin: getVal(`u_${key}_pin`),
+        state: getVal(`u_${key}_state`),
+        district: getVal(`u_${key}_district`)
+      };
+    });
+
+    const payload = {
+      aadhaar_name: getVal('aadhaar_name'),
+      aadhaar_number: getVal('aadhaar_number'),
+      org_type: getVal('org_type'),
+      pan_number: getVal('pan_number'),
+      pan_name: getVal('pan_name'),
+      dob: getVal('dob'),
+      wdv: getVal('wdv') || '0',
+      exclusion_cost: getVal('exclusion_cost') || '0',
+      total_turnover: getVal('total_turnover') || '0',
+      company_name: getVal('company_name'),
+      mobile: getVal('mobile'),
+      email: getVal('email'),
+      social_category: getVal('social_category'),
+      gender: getVal('gender'),
+      divyang: getVal('divyang'),
+      official_address: {
+        flat: getVal('addr_flat'),
+        building: getVal('addr_building'),
+        village: getVal('addr_village'),
+        block: getVal('addr_block'),
+        road: getVal('addr_road'),
+        city: getVal('addr_city'),
+        pin: getVal('addr_pin'),
+        state: getVal('addr_state'),
+        district: getVal('addr_district')
+      },
+      units: unitsObj,
+      previous_em: getVal('previous_em') || '0',
+      incorporation_date: getVal('incorporation_date'),
+      commenced: commenced,
+      commencement_date: commenced === '1' ? getVal('commencement_date') : undefined,
+      bank_name: getVal('bank_name'),
+      ifsc: getVal('ifsc'),
+      account_number: getVal('account_number'),
+      major_activity: getVal('major_activity'),
+      nic_activity: getVal('nic_activity'),
+      nic: {
+        nic2: getVal('nic2'),
+        nic4: getVal('nic4'),
+        nic5: getVal('nic5')
+      },
+      employees: {
+        male: getVal('emp_male') || '0',
+        female: getVal('emp_female') || '0',
+        others: getVal('emp_others') || '0'
+      }
+    };
+
+    // Remove undefined
+    Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+    return payload;
+  }
+
+  function syntaxHighlight(json) {
+    return json
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(m) {
+        let cls = 'json-num';
+        if (/^"/.test(m)) {
+          cls = /:$/.test(m) ? 'json-key' : 'json-str';
+        } else if (/true|false/.test(m)) {
+          cls = 'json-bool';
+        } else if (/null/.test(m)) {
+          cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + m + '</span>';
+      });
+  }
+
+  function generateJSON() {
+    const payload = buildJSON();
+    const jsonStr = JSON.stringify(payload, null, 2);
+    document.getElementById('json-output').innerHTML = syntaxHighlight(jsonStr);
+    
+    const panel = document.getElementById('output-panel');
+    panel.classList.remove('hidden');
+    document.getElementById('main-scroll').style.marginRight = '420px';
+    showToast('JSON generated successfully!', 'success');
+  }
+
+  function toggleOutput() {
+    const panel = document.getElementById('output-panel');
+    panel.classList.toggle('hidden');
+    const isOpen = !panel.classList.contains('hidden');
+    document.getElementById('main-scroll').style.marginRight = isOpen ? '420px' : '0';
+  }
+
+  function copyJSON() {
+    const payload = buildJSON();
+    const jsonStr = JSON.stringify(payload, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      showToast('JSON copied to clipboard!', 'success');
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = jsonStr;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('JSON copied!', 'success');
+    });
+  }
+
+  function downloadJSON() {
+    const payload = buildJSON();
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'udyam_registration_payload.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('File downloaded!', 'success');
+  }
+
+  function regenerate() {
+    generateJSON();
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function resetForm() {
+    if (!confirm('Reset all fields? This will clear all entered data.')) return;
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      if (el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+    document.getElementById('units-container').innerHTML = '';
+    units = {};
+    unitCount = 0;
+    updateUnitBadge();
+    document.getElementById('total-emp').textContent = '0';
+    document.getElementById('json-output').innerHTML = '// Cleared. Fill the form and click "Generate JSON"';
+    showToast('Form reset', 'success');
+  }
+
+  function loadSampleData() {
+    const s = {
+      aadhaar_name: "Abdur Rahim Samsudeen",
+      aadhaar_number: "779343046565",
+      org_type: "5",
+      pan_number: "AAQCP5898N",
+      pan_name: "PINAKA REALTY PRIVATE LIMITED",
+      dob: "16/01/2026",
+      wdv: "0",
+      exclusion_cost: "0",
+      total_turnover: "0",
+      company_name: "ABC ENTERPRISES",
+      mobile: "9876543210",
+      email: "abc@gmail.com",
+      social_category: "1",
+      gender: "1",
+      divyang: "0",
+      previous_em: "0",
+      incorporation_date: "01/04/2020",
+      commenced: "1",
+      commencement_date: "05/04/2020",
+      bank_name: "STATE BANK OF INDIA",
+      ifsc: "SBIN0001624",
+      account_number: "123456789012",
+      major_activity: "1",
+      nic_activity: "3",
+      nic2: "45",
+      nic4: "4510",
+      nic5: "45101",
+      emp_male: "10",
+      emp_female: "5",
+      emp_others: "1",
+      addr_flat: "12A",
+      addr_building: "ABC Complex",
+      addr_village: "Kumbakonam",
+      addr_block: "Block A",
+      addr_road: "Main Road",
+      addr_city: "Thanjavur",
+      addr_pin: "612001",
+      addr_state: "33",
+      addr_district: "582"
+    };
+
+    Object.keys(s).forEach(k => {
+      const el = document.getElementById(k);
+      if (el) el.value = s[k];
+    });
+
+    updateEmpTotal();
+
+    // Load units
+    document.getElementById('units-container').innerHTML = '';
+    units = {};
+    unitCount = 0;
+
+    addUnit({ key:'ABC', flat:'12A', building:'ABC Complex', village:'Kumbakonam', block:'Block A', road:'Main Road', city:'Thanjavur', pin:'612001', state:'33', district:'582' });
+    addUnit({ key:'DEF', flat:'34B', building:'DEF Complex', village:'Kumbakonam', block:'Block B', road:'Second Street', city:'Thanjavur', pin:'612001', state:'33', district:'582' });
+
+    showToast('Sample data loaded!', 'success');
+    generateJSON();
+  }
+
+  // Init
+  document.getElementById('toggle-btn').style.display = 'flex';
+</script>
+</body>
+</html>
