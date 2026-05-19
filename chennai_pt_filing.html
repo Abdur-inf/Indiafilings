@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eGov – Professional Tax Return Filing</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #f0f0f0; color: #333; }
+
+  /* ── Top bar ── */
+  .top-yellow { background: #f5c518; color: #000; font-weight: bold; font-size: 14px; padding: 6px 12px; }
+  .top-blue   { background: #003399; color: #fff; padding: 5px 12px; display:flex; justify-content:space-between; align-items:center; }
+  .top-blue .welcome { font-size: 12px; }
+
+  /* ── Layout ── */
+  .page-wrap { max-width: 960px; margin: 16px auto; background: #fff; border: 1px solid #aaa; }
+
+  /* ── Section heading ── */
+  .sec-head {
+    background: linear-gradient(to bottom, #5b7fc4, #2a4f9f);
+    color: #fff; font-weight: bold; font-size: 13px;
+    text-align: center; padding: 7px 10px; border-top: 2px solid #1a3070;
+  }
+
+  /* ── Table grid ── */
+  .form-grid { width: 100%; border-collapse: collapse; }
+  .form-grid td { padding: 5px 8px; vertical-align: middle; border: 1px solid #c8c8c8; }
+  .lbl  { background: #dce6f1; font-weight: bold; width: 22%; }
+  .lbl2 { background: #e8f0fe; width: 22%; }
+  .val  { background: #fff; }
+  .val2 { background: #f9fbe7; }
+
+  /* ── Inputs ── */
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; padding: 3px 5px; border: 1px solid #999; font-size: 12px; background: #fff;
+  }
+  input[readonly], input[disabled] { background: #e8e8e8; color: #555; }
+  textarea { resize: vertical; }
+
+  /* ── Employee table ── */
+  .emp-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  .emp-table th { background: #2a4f9f; color: #fff; padding: 5px 6px; border: 1px solid #1a3070; text-align:center; }
+  .emp-table td { border: 1px solid #c0c0c0; padding: 4px 6px; background:#fff; }
+  .emp-table td input { width: 70px; text-align: right; }
+
+  /* ── Mandatory ── */
+  .req { color: red; }
+
+  /* ── Buttons ── */
+  .btn-wrap { background: #eef; text-align: center; padding: 12px; border-top: 1px solid #ccc; }
+  .btn-submit {
+    background: linear-gradient(#4a7fd4, #1a4fa0); color: #fff;
+    border: 1px solid #0d3080; padding: 7px 28px; cursor: pointer;
+    font-size: 13px; border-radius: 3px; margin: 0 6px;
+  }
+  .btn-submit:hover { background: linear-gradient(#5a8fe4, #2a5fb0); }
+  .btn-reset {
+    background: linear-gradient(#ddd, #bbb); color: #333;
+    border: 1px solid #999; padding: 7px 20px; cursor: pointer;
+    font-size: 13px; border-radius: 3px; margin: 0 6px;
+  }
+
+  /* ── Response panel ── */
+  #response-panel {
+    display: none; margin: 16px; padding: 14px 18px;
+    border-radius: 4px; font-size: 13px; white-space: pre-wrap; word-break: break-all;
+  }
+  .resp-success { background: #e6ffe6; border: 1px solid #4caf50; color: #1b5e20; }
+  .resp-error   { background: #fff0f0; border: 1px solid #f44336; color: #b71c1c; }
+
+  /* ── Loader ── */
+  #loader { display:none; text-align:center; padding:10px; color:#003399; font-weight:bold; }
+
+  /* ── Note ── */
+  .note { color: red; font-size: 11px; padding: 8px 12px; }
+
+  .form-title {
+    text-align:center; background:#f5f5f5; padding:8px;
+    font-weight:bold; font-size:14px; border-bottom: 1px solid #ccc;
+  }
+
+  /* ── API config panel ── */
+  .api-cfg {
+    background: #fff8e1; border: 1px solid #ffe082; margin: 10px 16px;
+    padding: 10px 14px; border-radius: 4px;
+  }
+  .api-cfg label { font-weight: bold; display:block; margin-bottom: 4px; color: #5d4037; font-size:12px; }
+  .api-cfg input { font-size: 12px; padding: 4px 6px; border: 1px solid #ccc; width: 100%; }
+
+  /* ── Property toggle hint ── */
+  .prop-hint {
+    font-size: 11px; padding: 5px 8px; border-radius: 3px; margin-top: 3px; display: inline-block;
+  }
+  .prop-hint.filled  { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
+  .prop-hint.empty   { background:#fff3e0; color:#e65100; border:1px solid #ffcc80; }
+
+  /* ── Hidden rows animation ── */
+  .loc-extra { transition: opacity 0.3s; }
+  .loc-extra.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ── Top bars ── -->
+<div class="top-yellow">Professional Tax – Returns Filing</div>
+<div class="top-blue">
+  <div class="welcome">Today is: <strong>02/05/2026</strong> &nbsp;|&nbsp; cocapp6</div>
+  <div>Welcome <strong>arrahim</strong></div>
+</div>
+
+<div class="page-wrap">
+  <div class="form-title">New Assessee Registration – Form 2</div>
+
+  <!-- ── API Config ── -->
+  <div class="api-cfg">
+    <label>🔗 API Endpoint URL</label>
+    <input type="text" id="apiUrl" value="https://8j0tpjvv-5000.inc1.devtunnels.ms//chennai_pt" />
+  </div>
+
+  <!-- ── Response Panel ── -->
+  <div id="response-panel"></div>
+  <div id="loader">⏳ Submitting… please wait</div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: Assessee Details                          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="sec-head">Assessee Details</div>
+  <table class="form-grid">
+    <tr>
+      <td class="lbl">Username <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_username" value="josephdy" /></td>
+      <td class="lbl">Password <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_password" value="Vignesh@123" /></td>
+    </tr>
+    <tr>
+      <td class="lbl">Company Name (Trade/Firm/Company) <span class="req">*</span></td>
+      <td class="val" colspan="3"><input type="text" id="f_comp_name" value="SHADES N SOLIDS LLP" /></td>
+    </tr>
+    <tr>
+      <td class="lbl">Application Date <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_appDate" value="02/05/2026" readonly /></td>
+      <td class="lbl2">Nature of Profession</td>
+      <td class="val"><input type="text" id="f_nature" placeholder="Optional" /></td>
+    </tr>
+    <tr>
+      <td class="lbl">Category Type <span class="req">*</span></td>
+      <td class="val">
+        <select id="f_categoryType">
+          <option value="-1">------Select-------</option>
+          <option value="5">State Government</option>
+          <option value="1">Central Government</option>
+          <option value="2" selected>Private Establishment</option>
+          <option value="3">Individual</option>
+        </select>
+      </td>
+      <td class="lbl">Category Sub Type <span class="req">*</span></td>
+      <td class="val">
+        <select id="f_categorySelect">
+          <option value="-1">------Select-------</option>
+          <option value="6">TRADERS</option>
+          <option value="7">PUBLIC LIMITED COMPANIES</option>
+          <option value="8" selected>PRIVATE LIMITED COMPANIES</option>
+          <option value="9">SOCIETIES</option>
+          <option value="10">TRUSTS</option>
+        </select>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: Location Details                          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="sec-head">Location Details</div>
+  <table class="form-grid">
+    <!-- Property Tax Number always visible -->
+    <tr>
+      <td class="lbl2">Property Tax Number</td>
+      <td class="val" colspan="3">
+        <input type="text" id="f_propertyTaxNumber" value="0"
+               oninput="toggleLocationFields()"
+               placeholder="Enter Property Tax Number if available" />
+        <span id="propHint" class="prop-hint empty">
+          ⚠️ Property Tax Number not provided — all location fields are required
+        </span>
+      </td>
+    </tr>
+
+    <!-- ── Extra location fields (hidden when Property Tax Number is filled) ── -->
+    <tr class="loc-extra" id="row_doorno">
+      <td class="lbl">Door No <span class="req">*</span></td>
+      <td class="val" colspan="3"><input type="text" id="f_doorno" value="10-11" /></td>
+    </tr>
+    <tr class="loc-extra" id="row_zone">
+      <td class="lbl">Zone <span class="req">*</span></td>
+      <td class="val">
+        <select id="f_zoneId">
+          <option value="-1">------Select-------</option>
+          <option value="18872">N01</option>
+          <option value="18873">N02</option>
+          <option value="18874">N03</option>
+          <option value="18875">N04</option>
+          <option value="18876">N05</option>
+          <option value="18877" selected>N06</option>
+          <option value="18878">N07</option>
+          <option value="18879">N08</option>
+          <option value="18880">N09</option>
+          <option value="18881">N10</option>
+          <option value="18882">N11</option>
+          <option value="18883">N12</option>
+          <option value="18885">N13</option>
+          <option value="18884">N14</option>
+          <option value="18886">N15</option>
+        </select>
+      </td>
+      <td class="lbl">Ward / Division <span class="req">*</span></td>
+      <td class="val">
+        <select id="f_wardId">
+          <option value="-1">------Select-------</option>
+          <option value="18950" selected>N064</option>
+          <option value="18951">N065</option>
+          <option value="18952">N066</option>
+          <option value="18953">N067</option>
+          <option value="18955">N069</option>
+          <option value="18956">N070</option>
+          <option value="18957">N071</option>
+          <option value="18959">N073</option>
+          <option value="18960">N074</option>
+          <option value="18961">N075</option>
+          <option value="18962">N076</option>
+          <option value="18963">N077</option>
+          <option value="18964">N078</option>
+        </select>
+      </td>
+    </tr>
+    <tr class="loc-extra" id="row_area">
+      <td class="lbl">Area ID <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_areaId" value="180" /></td>
+      <td class="lbl">Location ID <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_locationId" value="1793" /></td>
+    </tr>
+    <tr class="loc-extra" id="row_street">
+      <td class="lbl">Street ID <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_streetId" value="89926" /></td>
+      <td class="lbl">Pincode <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_pincode" value="600099" maxlength="6" /></td>
+    </tr>
+  </table>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 3: Authorised Signatory                      -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="sec-head">Authorised Signatory Details</div>
+  <table class="form-grid">
+    <tr>
+      <td class="lbl">Authorised Person Name <span class="req">*</span></td>
+      <td class="val" colspan="3"><input type="text" id="f_auth_name" value="HARIKUMAR DEEPA ABHINAND" /></td>
+    </tr>
+    <tr>
+      <td class="lbl">Mobile Number <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_auth_mobile" value="9994020163" maxlength="10" /></td>
+      <td class="lbl2">&nbsp;</td>
+      <td class="val">&nbsp;</td>
+    </tr>
+  </table>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 4: Assessment Details – Director/Employee    -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="sec-head">Assessment Details – Directors &amp; Employees</div>
+  <table class="form-grid">
+    <tr><td colspan="4">
+      <table class="emp-table" id="empTable">
+        <thead>
+          <tr>
+            <th>Sl.No</th>
+            <th>Salary Slab</th>
+            <th>Slab Amount (₹)</th>
+            <th>No. of Directors</th>
+            <th>No. of Employees</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align:center">1</td>
+            <td>Up to Rs.21,000</td>
+            <td style="text-align:right">Nil</td>
+            <td><input type="number" class="dir-inp" id="dir0" min="0" value="0" /></td>
+            <td><input type="number" class="emp-inp" id="emp0" min="0" value="0" /></td>
+          </tr>
+          <tr>
+            <td style="text-align:center">2</td>
+            <td>Rs.21,001 to Rs.30,000</td>
+            <td style="text-align:right">135</td>
+            <td><input type="number" class="dir-inp" id="dir1" min="0" value="0" /></td>
+            <td><input type="number" class="emp-inp" id="emp1" min="0" value="0" /></td>
+          </tr>
+          <tr>
+            <td style="text-align:center">3</td>
+            <td>Rs.30,001 to Rs.45,000</td>
+            <td style="text-align:right">315</td>
+            <td><input type="number" class="dir-inp" id="dir2" min="0" value="0" /></td>
+            <td><input type="number" class="emp-inp" id="emp2" min="0" value="0" /></td>
+          </tr>
+          <tr>
+            <td style="text-align:center">4</td>
+            <td>Rs.45,001 to Rs.60,000</td>
+            <td style="text-align:right">690</td>
+            <td><input type="number" class="dir-inp" id="dir3" min="0" value="0" /></td>
+            <td><input type="number" class="emp-inp" id="emp3" min="0" value="0" /></td>
+          </tr>
+          <tr>
+            <td style="text-align:center">5</td>
+            <td>Rs.60,001 to Rs.75,000</td>
+            <td style="text-align:right">1025</td>
+            <td><input type="number" class="dir-inp" id="dir4" min="0" value="0" /></td>
+            <td><input type="number" class="emp-inp" id="emp4" min="0" value="0" /></td>
+          </tr>
+          <tr>
+            <td style="text-align:center">6</td>
+            <td>Rs.75,001 and above</td>
+            <td style="text-align:right">1250</td>
+            <td><input type="number" class="dir-inp" id="dir5" min="0" value="2" /></td>
+            <td><input type="number" class="emp-inp" id="emp5" min="0" value="0" /></td>
+          </tr>
+        </tbody>
+      </table>
+    </td></tr>
+  </table>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SECTION 5: Other Details                             -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="sec-head">Other Details</div>
+  <table class="form-grid">
+    <tr>
+      <td class="lbl">Date of Commencement <span class="req">*</span></td>
+      <td class="val">
+        <input type="text" id="f_doi" value="12/04/2026" placeholder="DD/MM/YYYY" />
+      </td>
+      <td class="lbl2">Half Yearly Gross Income <span class="req">*</span></td>
+      <td class="val"><input type="text" id="f_halfYearlyGrossIncome" value="0" /></td>
+    </tr>
+    <tr>
+      <td class="lbl">Remarks <span class="req">*</span></td>
+      <td class="val" colspan="3">
+        <textarea id="f_remarks" rows="3">New Registration Profile</textarea>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ── Note ── -->
+  <div class="note">
+    * Mandatory Fields<br>
+    Note: The detailed Form 1 to be worked out and the summary data of that working should be entered here.
+  </div>
+
+  <!-- ── Buttons ── -->
+  <div class="btn-wrap">
+    <button class="btn-submit" onclick="submitForm()">🚀 Submit to API</button>
+    <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+// ── Location fields toggle ──────────────────────────────────────────
+const LOC_ROWS = ['row_doorno', 'row_zone', 'row_area', 'row_street'];
+
+function hasPropertyTax() {
+  const v = document.getElementById('f_propertyTaxNumber').value.trim();
+  // "0" or empty = not available
+  return v !== '' && v !== '0';
+}
+
+function toggleLocationFields() {
+  const hasProp = hasPropertyTax();
+  const hint    = document.getElementById('propHint');
+
+  LOC_ROWS.forEach(id => {
+    const row = document.getElementById(id);
+    if (hasProp) {
+      row.classList.add('hidden');
+    } else {
+      row.classList.remove('hidden');
+    }
+  });
+
+  if (hasProp) {
+    hint.textContent = '✅ Property Tax Number provided — other location fields not required';
+    hint.className   = 'prop-hint filled';
+  } else {
+    hint.textContent = '⚠️ Property Tax Number not provided — all location fields are required';
+    hint.className   = 'prop-hint empty';
+  }
+}
+
+// Run on page load to set correct initial state
+window.addEventListener('DOMContentLoaded', toggleLocationFields);
+
+// ── Build API payload ───────────────────────────────────────────────
+function buildPayload() {
+  const rows = [];
+  for (let i = 0; i < 6; i++) {
+    rows.push({
+      directors: parseInt(document.getElementById('dir' + i).value) || 0,
+      employees: parseInt(document.getElementById('emp' + i).value) || 0
+    });
+  }
+
+  const propTax = document.getElementById('f_propertyTaxNumber').value.trim();
+  const hasProp = hasPropertyTax();
+
+  const payload = {
+    username:              document.getElementById('f_username').value.trim(),
+    password:              document.getElementById('f_password').value.trim(),
+    comp_name:             document.getElementById('f_comp_name').value.trim(),
+    categoryType:          document.getElementById('f_categoryType').value,
+    categorySelect:        document.getElementById('f_categorySelect').value,
+    propertyTaxNumber:     propTax || '0',
+    auth_name:             document.getElementById('f_auth_name').value.trim(),
+    auth_mobile_no:        document.getElementById('f_auth_mobile').value.trim(),
+    details_dir_emp:       { rows },
+    doi:                   document.getElementById('f_doi').value.trim(),
+    halfYearlyGrossIncome: document.getElementById('f_halfYearlyGrossIncome').value.trim(),
+    remarks:               document.getElementById('f_remarks').value.trim()
+  };
+
+  // Include full location fields only when Property Tax Number is NOT available
+  if (!hasProp) {
+    payload.doorno     = document.getElementById('f_doorno').value.trim();
+    payload.zoneId     = document.getElementById('f_zoneId').value;
+    payload.wardId     = document.getElementById('f_wardId').value;
+    payload.areaId     = document.getElementById('f_areaId').value.trim();
+    payload.locationId = document.getElementById('f_locationId').value.trim();
+    payload.streetId   = document.getElementById('f_streetId').value.trim();
+    payload.pincode    = document.getElementById('f_pincode').value.trim();
+  }
+
+  return payload;
+}
+
+// ── Validation ─────────────────────────────────────────────────────
+function validateForm(payload) {
+  if (!payload.username || !payload.password || !payload.comp_name) {
+    return '❌ Username, Password and Company Name are required.';
+  }
+  if (!payload.auth_name || !payload.auth_mobile_no) {
+    return '❌ Authorised person name and mobile are required.';
+  }
+  if (!hasPropertyTax()) {
+    // All location fields required
+    if (!payload.doorno)     return '❌ Door No is required when Property Tax Number is not provided.';
+    if (!payload.zoneId || payload.zoneId === '-1') return '❌ Zone is required when Property Tax Number is not provided.';
+    if (!payload.wardId || payload.wardId === '-1') return '❌ Ward / Division is required when Property Tax Number is not provided.';
+    if (!payload.areaId)     return '❌ Area ID is required when Property Tax Number is not provided.';
+    if (!payload.locationId) return '❌ Location ID is required when Property Tax Number is not provided.';
+    if (!payload.streetId)   return '❌ Street ID is required when Property Tax Number is not provided.';
+    if (!payload.pincode)    return '❌ Pincode is required when Property Tax Number is not provided.';
+  }
+  if (!payload.doi)     return '❌ Date of Commencement is required.';
+  if (!payload.remarks) return '❌ Remarks are required.';
+  return null;
+}
+
+// ── Show response ───────────────────────────────────────────────────
+function showResponse(msg, isError) {
+  const panel = document.getElementById('response-panel');
+  panel.style.display = 'block';
+  panel.className = 'resp-' + (isError ? 'error' : 'success');
+  panel.textContent = msg;
+  panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Submit ──────────────────────────────────────────────────────────
+async function submitForm() {
+  const apiUrl = document.getElementById('apiUrl').value.trim();
+  if (!apiUrl) { alert('Please enter the API URL.'); return; }
+
+  const payload = buildPayload();
+  const err     = validateForm(payload);
+  if (err) { showResponse(err, true); return; }
+
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('response-panel').style.display = 'none';
+
+  try {
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await resp.text();
+    document.getElementById('loader').style.display = 'none';
+
+    let pretty;
+    try { pretty = JSON.stringify(JSON.parse(text), null, 2); }
+    catch (_) { pretty = text; }
+
+    showResponse(
+      (resp.ok ? '✅ Success' : '⚠️ Server Error') + ' (HTTP ' + resp.status + ')\n\n' + pretty,
+      !resp.ok
+    );
+
+  } catch (err) {
+    document.getElementById('loader').style.display = 'none';
+    showResponse('❌ Network / CORS Error:\n' + err.message +
+      '\n\nMake sure the API server allows requests from this origin.', true);
+  }
+}
+
+// ── Reset ───────────────────────────────────────────────────────────
+function resetForm() {
+  document.querySelectorAll('input[type=text], input[type=number], textarea').forEach(el => {
+    if (!el.readOnly && !el.disabled) el.value = '';
+  });
+  document.getElementById('response-panel').style.display = 'none';
+  toggleLocationFields();
+}
+</script>
+</body>
+</html>
