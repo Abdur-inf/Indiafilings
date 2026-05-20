@@ -367,6 +367,37 @@
     box-shadow: 0 4px 14px rgba(249,115,22,0.3);
   }
 
+  /* API Config Bar */
+  .api-config-bar {
+    background: linear-gradient(135deg, #0d1321 0%, #1a2236 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 40px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .api-config-bar label {
+    font-size: 11px; font-weight: 600; color: var(--accent);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .api-config-bar input {
+    flex: 1; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 14px; font-size: 13px;
+    color: var(--text); font-family: 'Courier New', monospace;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .api-config-bar input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+  }
+  .api-config-bar input::placeholder { color: var(--muted); font-family: 'DM Sans', sans-serif; }
+  .api-config-indicator {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .api-config-indicator.active { background: var(--success); box-shadow: 0 0 6px var(--success); }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -428,6 +459,18 @@
     <p>Registration Form — API Submission</p>
   </div>
 </header>
+
+<!-- API Config Bar -->
+<div class="api-config-bar">
+  <label>🔗 API Base URL</label>
+  <input
+    type="url"
+    id="apiBaseUrl"
+    placeholder="https://your-server.com  (e.g. https://abc123.ngrok.io)"
+    oninput="onApiUrlChange()"
+  >
+  <div class="api-config-indicator" id="apiIndicator" title="Paste your API base URL above"></div>
+</div>
 
 <div class="container">
 
@@ -1021,6 +1064,24 @@ function copyResponse() {
   });
 }
 
+// ─── API BASE URL ─────────────────────────────────────────────────────────────
+function getApiBase() {
+  const raw = (document.getElementById('apiBaseUrl')?.value || '').trim().replace(/\/+$/, '');
+  return raw;
+}
+
+function onApiUrlChange() {
+  const indicator = document.getElementById('apiIndicator');
+  const val = getApiBase();
+  if (val.startsWith('http')) {
+    indicator.classList.add('active');
+    indicator.title = 'API URL set: ' + val;
+  } else {
+    indicator.classList.remove('active');
+    indicator.title = 'Paste your API base URL above';
+  }
+}
+
 // ─── SUBMIT TO API ───────────────────────────────────────────────────────────
 async function submitToAPI() {
   if (!validate()) {
@@ -1047,7 +1108,7 @@ async function submitToAPI() {
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   try {
-    const res = await fetch('/startup_india', {
+    const res = await fetch(getApiBase() + '/startup_india', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1152,8 +1213,13 @@ function downloadJSON() {
 }
 
 // ─── SSE: listen for OTP request from Flask ────────────────────────────────
-(function startSSE() {
-  const es = new EventSource('/otp_stream');
+let sseInstance = null;
+function startSSE() {
+  const base = getApiBase();
+  if (!base.startsWith('http')) return; // wait until URL is set
+  if (sseInstance) { sseInstance.close(); sseInstance = null; }
+  const es = new EventSource(base + '/otp_stream');
+  sseInstance = es;
   es.onmessage = (e) => {
     if (e.data === 'connected' || e.data === 'heartbeat') return;
     try {
@@ -1161,8 +1227,13 @@ function downloadJSON() {
       if (msg.event === 'otp_needed') showOtpModal();
     } catch {}
   };
-  es.onerror = () => { setTimeout(startSSE, 5000); es.close(); };
-})();
+  es.onerror = () => { setTimeout(startSSE, 5000); es.close(); sseInstance = null; };
+}
+
+// Re-start SSE whenever user sets a valid URL
+const _origOnApiUrlChange = onApiUrlChange;
+onApiUrlChange = function() { _origOnApiUrlChange(); startSSE(); };
+
 
 function showOtpModal() {
   document.getElementById('mobileOtpInput').value = '';
@@ -1189,7 +1260,7 @@ async function submitOtp() {
   errEl.style.display = 'none';
 
   try {
-    const res = await fetch('/otp_submit', {
+    const res = await fetch(getApiBase() + '/otp_submit', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
