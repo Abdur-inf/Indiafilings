@@ -436,8 +436,10 @@ function buildPayload() {
   // Include full location fields only when Property Tax Number is NOT available
   if (!hasProp) {
     payload.doorno     = document.getElementById('f_doorno').value.trim();
-    payload.zoneId     = document.getElementById('f_zoneId').value;
-    payload.wardId     = document.getElementById('f_wardId').value;
+    // payload.zoneId     = document.getElementById('f_zoneId').value;
+    payload.zoneId = getSelectText('f_zoneId');
+    // payload.wardId     = document.getElementById('f_wardId').value;
+    payload.wardId = getSelectText('f_wardId');
     payload.areaId     = getSelectText('f_areaId');
     payload.locationId = getSelectText('f_locationId');
     payload.streetId   = getSelectText('f_streetId');
