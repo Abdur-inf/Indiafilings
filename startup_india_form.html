@@ -400,6 +400,13 @@
     transition: background 0.3s;
   }
   .api-config-indicator.active { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .api-clear-btn {
+    padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border);
+    background: #fff; color: var(--muted); font-size: 12px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .api-clear-btn:hover { border-color: var(--error); color: var(--error); background: #fff5f5; }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
@@ -469,9 +476,10 @@
   <input
     type="url"
     id="apiBaseUrl"
-    placeholder="https://your-server.com  (e.g. https://abc123.ngrok.io)"
+    placeholder="https://f35cpbxp-1111.inc1.devtunnels.ms"
     oninput="onApiUrlChange()"
   >
+  <button class="api-clear-btn" onclick="clearApiUrl()" title="Clear saved URL">✕ Clear</button>
   <div class="api-config-indicator" id="apiIndicator" title="Paste your API base URL above"></div>
 </div>
 
@@ -1074,8 +1082,10 @@ function getApiBase() {
 }
 
 function onApiUrlChange() {
-  const indicator = document.getElementById('apiIndicator');
   const val = getApiBase();
+  // Persist to localStorage so it survives page refresh
+  try { localStorage.setItem('si_api_base', val); } catch(e) {}
+  const indicator = document.getElementById('apiIndicator');
   if (val.startsWith('http')) {
     indicator.classList.add('active');
     indicator.title = 'API URL set: ' + val;
@@ -1083,6 +1093,24 @@ function onApiUrlChange() {
     indicator.classList.remove('active');
     indicator.title = 'Paste your API base URL above';
   }
+}
+
+// Restore saved URL on page load
+(function restoreSavedUrl() {
+  try {
+    const saved = localStorage.getItem('si_api_base');
+    if (saved) {
+      const input = document.getElementById('apiBaseUrl');
+      if (input) { input.value = saved; onApiUrlChange(); }
+    }
+  } catch(e) {}
+})();
+
+function clearApiUrl() {
+  try { localStorage.removeItem('si_api_base'); } catch(e) {}
+  const input = document.getElementById('apiBaseUrl');
+  if (input) { input.value = ''; input.focus(); }
+  onApiUrlChange();
 }
 
 // ─── SUBMIT TO API ───────────────────────────────────────────────────────────
