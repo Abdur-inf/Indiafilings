@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EPF API Caller</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f7f9fc;
+      --border: #dde3ee;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+      --text: #1e2a3b;
+      --muted: #64748b;
+      --muted2: #94a3b8;
+      --success: #16a34a;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      --error: #dc2626;
+      --error-bg: #fef2f2;
+      --error-border: #fecaca;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --shadow: 0 1px 3px rgba(30,42,59,0.08), 0 4px 16px rgba(30,42,59,0.06);
+      --shadow-lg: 0 4px 24px rgba(30,42,59,0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px 48px;
+      background-image:
+        radial-gradient(ellipse 70% 40% at 60% 0%, rgba(37,99,235,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 10% 90%, rgba(37,99,235,0.04) 0%, transparent 60%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+    }
+
+    /* Header */
+    .header { margin-bottom: 28px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      background: var(--accent-light);
+      border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 6px;
+      padding: 4px 10px;
+      margin-bottom: 14px;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.03em;
+    }
+    .header h1 span { color: var(--accent); }
+    .header p {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* URL Bar */
+    .url-bar {
+      padding: 14px 20px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .method-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--accent);
+      border-radius: 6px;
+      padding: 5px 10px;
+      flex-shrink: 0;
+      letter-spacing: 0.06em;
+    }
+    .url-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .url-input::placeholder { color: var(--muted2); }
+    .url-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    /* Form Body */
+    .form-body { padding: 24px 20px; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .field-full { grid-column: 1 / -1; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    label .required { color: var(--error); margin-left: 2px; }
+
+    input[type="text"],
+    input[type="password"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    input::placeholder { color: var(--muted2); }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    input:hover:not(:focus) { border-color: #b8c4d8; }
+
+    /* Payload Preview */
+    .payload-section { margin-top: 4px; }
+    .payload-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .payload-box {
+      background: #f8fafd;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #1e40af;
+      line-height: 1.8;
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .copy-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* Actions */
+    .actions {
+      margin-top: 22px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-submit {
+      flex: 1;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 24px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+    .btn-submit:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+    }
+    .btn-submit:active { transform: translateY(0); box-shadow: none; }
+    .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-reset {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 20px;
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover { border-color: var(--muted2); color: var(--text); background: var(--surface2); }
+
+    /* Spinner */
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Response */
+    .response-section { margin-top: 20px; display: none; }
+    .response-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .status-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .status-pill.success {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+    }
+    .status-pill.error {
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid var(--error-border);
+    }
+    .status-pill.warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+    .response-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted2);
+      margin-left: auto;
+    }
+    .response-box {
+      background: #f8fafd;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text);
+      color: #fff;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(70px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 1000;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 520px) {
+      .fields-grid { grid-template-columns: 1fr; }
+      .field-full { grid-column: 1; }
+      body { padding: 16px 12px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="tag"><span class="dot"></span> POST · application/json</div>
+    <h1>EPF <span>API</span> Caller</h1>
+    <p>// Fill fields → send payload → inspect response</p>
+  </div>
+
+  <div class="card">
+    <!-- URL Bar -->
+    <div class="url-bar">
+      <div class="method-badge">POST</div>
+      <input class="url-input" type="text" id="apiUrl" placeholder="https://your-api-endpoint.com/api/v1/..." />
+    </div>
+
+    <!-- Form -->
+    <div class="form-body">
+      <div class="section-label">Credentials</div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>Username <span class="required">*</span></label>
+          <input type="text" id="username" placeholder="KDMAL3649880000" />
+        </div>
+        <div class="field">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" id="password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <div class="section-label">Identity Details</div>
+      <div class="fields-grid">
+        <div class="field">
+          <label>UAN Number <span class="required">*</span></label>
+          <input type="text" id="uan_no" placeholder="123456789012" maxlength="12" />
+        </div>
+        <div class="field">
+          <label>Aadhaar Number <span class="required">*</span></label>
+          <input type="text" id="aadhar_no" placeholder="1234 1234 1234" maxlength="14" />
+        </div>
+        <div class="field field-full">
+          <label>Name as per Aadhaar <span class="required">*</span></label>
+          <input type="text" id="aadhar_name" placeholder="e.g. Rahim" />
+        </div>
+        <div class="field">
+          <label>Date of Birth <span class="required">*</span></label>
+          <input type="text" id="dob" placeholder="DD/MM/YYYY" maxlength="10" />
+        </div>
+      </div>
+
+      <!-- Payload Preview -->
+      <div class="payload-section">
+        <div class="section-label">Payload Preview</div>
+        <div class="payload-header">
+          <span></span>
+          <button class="copy-btn" onclick="copyPayload()">⎘ Copy JSON</button>
+        </div>
+        <div class="payload-box" id="payloadPreview">{}</div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+          <span id="btnText">▶ Send Request</span>
+          <span class="spinner" id="spinner"></span>
+        </button>
+      </div>
+
+      <!-- Response -->
+      <div class="response-section" id="responseSection">
+        <div class="section-label">Response</div>
+        <div class="response-header">
+          <span class="status-pill" id="statusPill"></span>
+          <span class="response-time" id="responseTime"></span>
+        </div>
+        <div class="response-box" id="responseBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const fields = ['username','password','uan_no','aadhar_no','aadhar_name','dob'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      if (id === 'aadhar_no') formatAadhar(el);
+      if (id === 'dob') formatDob(el);
+      updatePreview();
+    });
+  });
+
+  function formatAadhar(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 12);
+    el.value = v.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+  }
+
+  function formatDob(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 8);
+    if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+    else if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+    el.value = v;
+  }
+
+  function getPayload() {
+    return {
+      username:    document.getElementById('username').value.trim(),
+      password:    document.getElementById('password').value.trim(),
+      uan_no:      document.getElementById('uan_no').value.trim(),
+      aadhar_no:   document.getElementById('aadhar_no').value.replace(/\s/g, ''),
+      aadhar_name: document.getElementById('aadhar_name').value.trim(),
+      dob:         document.getElementById('dob').value.trim()
+    };
+  }
+
+  function updatePreview() {
+    document.getElementById('payloadPreview').textContent =
+      JSON.stringify(getPayload(), null, 2);
+  }
+  updatePreview();
+
+  async function submitForm() {
+    const url = document.getElementById('apiUrl').value.trim();
+    if (!url) { showToast('⚠ Please enter the API endpoint URL'); return; }
+
+    const payload = getPayload();
+    const empty = Object.entries(payload).find(([k,v]) => !v);
+    if (empty) { showToast(`⚠ "${empty[0]}" is required`); return; }
+
+    const btn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Sending...';
+
+    const startTime = Date.now();
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const elapsed = Date.now() - startTime;
+      let responseText;
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const json = await res.json();
+        responseText = JSON.stringify(json, null, 2);
+      } else {
+        responseText = await res.text();
+      }
+      showResponse(res.status, responseText, elapsed);
+    } catch (err) {
+      const elapsed = Date.now() - startTime;
+      showResponse(0, `Network Error:\n${err.message}`, elapsed);
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = '▶ Send Request';
+    }
+  }
+
+  function showResponse(status, body, elapsed) {
+    const section = document.getElementById('responseSection');
+    const pill = document.getElementById('statusPill');
+    const box = document.getElementById('responseBox');
+    const time = document.getElementById('responseTime');
+    section.style.display = 'block';
+    box.textContent = body;
+    time.textContent = `${elapsed}ms`;
+    pill.className = 'status-pill';
+    if (status === 0) {
+      pill.textContent = 'ERROR';
+      pill.classList.add('error');
+    } else if (status >= 200 && status < 300) {
+      pill.textContent = `${status} OK`;
+      pill.classList.add('success');
+    } else if (status >= 400 && status < 500) {
+      pill.textContent = `${status} Client Error`;
+      pill.classList.add('error');
+    } else {
+      pill.textContent = `${status} Server Error`;
+      pill.classList.add('warning');
+    }
+    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function resetForm() {
+    fields.forEach(id => document.getElementById(id).value = '');
+    document.getElementById('apiUrl').value = '';
+    document.getElementById('responseSection').style.display = 'none';
+    updatePreview();
+    showToast('✓ Form cleared');
+  }
+
+  function copyPayload() {
+    const text = JSON.stringify(getPayload(), null, 2);
+    navigator.clipboard.writeText(text).then(() => showToast('✓ Payload copied to clipboard'));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
