@@ -1,292 +1,161 @@
-
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-<style>
-:root{
-  --bg:#f0f4f8;--surface:#ffffff;--surface2:#f7f9fc;--border:#dde3ee;
-  --accent:#2563eb;--accent-hover:#1d4ed8;--accent-light:#eff6ff;
-  --text:#1e2a3b;--muted:#64748b;--muted2:#94a3b8;
-  --success:#16a34a;--success-bg:#f0fdf4;--success-border:#bbf7d0;
-  --error:#dc2626;--error-bg:#fef2f2;--error-border:#fecaca;
-  --warning:#d97706;--warning-bg:#fffbeb;--warning-border:#fde68a;
-  --shadow:0 1px 3px rgba(30,42,59,.08),0 4px 16px rgba(30,42,59,.06);
-}
+<!DOCTYPE html>
+<html>
+<head><title></title>
+  <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.wrap{background:var(--bg);padding:24px 0 32px;font-family:'Inter',sans-serif;color:var(--text)}
-.header{margin-bottom:20px}
-.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--accent);background:var(--accent-light);border:1px solid rgba(37,99,235,.2);border-radius:6px;padding:4px 10px;margin-bottom:12px}
-.tag-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.header h1{font-size:24px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
-.header h1 span{color:var(--accent)}
-.header p{margin-top:5px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-.url-bar{padding:13px 20px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
-.method-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:5px 10px;flex-shrink:0;letter-spacing:.06em}
-.url-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
-.url-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.url-input::placeholder{color:var(--muted2)}
-.form-body{padding:22px 20px}
-.section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
-.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:18px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
-.field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:12px;font-weight:600;color:var(--text);letter-spacing:.01em}
-.req{color:var(--error);margin-left:2px}
-.field input{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
-.field input::placeholder{color:var(--muted2)}
-.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.field input:hover:not(:focus){border-color:#b8c4d8}
+body{font-family:var(--font-sans)}
+.wrap{padding:1.5rem 1rem;max-width:720px;margin:0 auto}
 
-.member-block{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px}
-.mb-head{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
-.mb-title{font-size:12px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
-.mb-num{background:var(--accent-light);color:var(--accent);border-radius:5px;padding:2px 8px;font-size:11px;border:1px solid rgba(37,99,235,.15)}
-.rm-btn{
-  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
-  color:var(--error);background:var(--error-bg);
-  border:1px solid var(--error-border);border-radius:6px;
-  padding:5px 12px;cursor:pointer;
-  display:inline-flex;align-items:center;gap:5px;
-}
-.rm-btn:hover{background:var(--error-border)}
+h2{font-size:18px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.sub{font-size:13px;color:var(--color-text-secondary);margin-bottom:1.5rem}
+.section{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.section-title{font-size:14px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-row.one{grid-template-columns:1fr}
+label{font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px}
+input,select{width:100%;padding:7px 10px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:var(--font-sans)}
+input:focus,select:focus{outline:none;border-color:#378ADD;box-shadow:0 0 0 2px rgba(55,138,221,0.15)}
+.member-block{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem;margin-bottom:12px;position:relative}
+.member-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.member-label{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.btn-remove{background:none;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:4px 10px;font-size:12px;color:var(--color-text-secondary);cursor:pointer}
+.btn-remove:hover{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger)}
+.btn-add{background:none;border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);padding:8px;width:100%;font-size:13px;color:var(--color-text-secondary);cursor:pointer;margin-bottom:1rem}
+.btn-add:hover{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.btn-submit{background:#185FA5;color:#fff;border:none;border-radius:var(--border-radius-md);padding:10px 28px;font-size:14px;font-weight:500;cursor:pointer;width:100%}
+.btn-submit:hover{background:#0C447C}
+.btn-submit:active{transform:scale(0.98)}
+.btn-submit:disabled{background:#888;cursor:not-allowed}
+.url-row{display:flex;gap:8px;margin-bottom:1rem}
+.url-input{flex:1,border}
+input,select{border: black solid 1px;border-radius: 5px;}
+#response-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem;font-family:var(--font-mono);font-size:12px;white-space:pre-wrap;word-break:break-all;color:var(--color-text-primary);max-height:280px;overflow-y:auto;display:none;margin-top:1rem}
+.status-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-left:8px;font-weight:500}
+.badge-ok{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-err{background:var(--color-background-danger);color:var(--color-text-danger)}
+.badge-load{background:var(--color-background-info);color:var(--color-text-info)}
+button{background-color:#0C447C;border-radius: 5px;}
+</style></head>
+<body>
+<div class="wrap" style="background-color: rgb(202, 247, 247);">
+  <h2>PF New Onboarding</h2>
+  <p class="sub">POST /pf_new_onboarding — configure your endpoint and members below</p>
 
-.mb-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+  <div class="section">
+    <div class="section-title"><i class="ti ti-server" aria-hidden="true"></i> Endpoint & credentials</div>
 
-.add-member-btn{
-  width:100%;padding:11px;
-  background:var(--accent-light);
-  border:1.5px solid rgba(37,99,235,.35);
-  border-radius:10px;
-  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
-  color:var(--accent);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:7px;
-  margin-bottom:4px;transition:background .15s;
-}
-.add-member-btn:hover{background:#dbeafe}
-
-.member-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);margin-bottom:10px}
-.payload-section{margin-top:6px}
-.payload-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.payload-box{background:#f8fafd;border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#1e40af;line-height:1.8;white-space:pre;overflow-x:auto;max-height:160px;overflow-y:auto}
-.copy-btn{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;transition:all .2s}
-.copy-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.actions{margin-top:20px;display:flex;gap:10px}
-.btn-reset{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-reset:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.btn-submit{flex:1;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px 24px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;letter-spacing:.01em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(37,99,235,.25)}
-.btn-submit:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,99,235,.3)}
-.btn-submit:active{transform:translateY(0);box-shadow:none}
-.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-.response-section{display:none;margin-top:22px}
-.response-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.status-pill{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px}
-.status-pill.success{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
-.status-pill.error{background:var(--error-bg);color:var(--error);border:1px solid var(--error-border)}
-.status-pill.warning{background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border)}
-.response-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);margin-left:auto}
-.response-box{background:#f8fafd;border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow-y:auto}
-.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999}
-.toast{background:var(--text);color:#fff;border-radius:10px;padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;box-shadow:0 4px 24px rgba(30,42,59,.18);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
-.toast.show{transform:translateY(0);opacity:1}
-</style>
-
-<div class="wrap">
-  <div class="header">
-    <div class="tag"><span class="tag-dot"></span> POST · application/json</div>
-    <h1>PF New Employee <span>Onboarding</span></h1>
-    <p>// Fill fields → add members → send payload → inspect response</p>
-  </div>
-
-  <div class="card">
-    <div class="url-bar">
-      <div class="method-badge">POST</div>
-      <input class="url-input" type="text" id="apiUrl" placeholder="http://127.0.0.1:5000/pf_new_onboarding">
-    </div>
-
-    <div class="form-body">
-
-      <div class="section-label">Credentials</div>
-      <div class="g2">
-        <div class="field"><label>Username <span class="req">*</span></label><input type="text" id="un"></div>
-        <div class="field"><label>Password <span class="req">*</span></label><input type="text" id="pw"></div>
-      </div>
-
-      <div class="section-label">Members</div>
-      <div class="member-count" id="mcnt">0 members added</div>
-      <div id="members"></div>
-
-      <button class="add-member-btn" onclick="addMember()">
-        + Add Member
-      </button>
-
-      <div class="payload-section">
-        <div class="section-label">Payload Preview</div>
-        <div class="payload-header">
-          <span></span>
-          <button class="copy-btn" onclick="copyPayload()">⎘ Copy JSON</button>
-        </div>
-        <div class="payload-box" id="payloadPreview">{}</div>
-      </div>
-
-      <div class="actions">
-        <button class="btn-reset" onclick="resetAll()">↺ Reset</button>
-        <button class="btn-submit" id="sendBtn" onclick="sendRequest()">
-          <span id="btnTxt">▶ Send Request</span>
-          <span class="spinner" id="spinner"></span>
-        </button>
-      </div>
-
-      <div class="response-section" id="respSection">
-        <div class="section-label">Response</div>
-        <div class="response-header">
-          <span class="status-pill" id="statusPill"></span>
-          <span class="response-time" id="respTime"></span>
-        </div>
-        <div class="response-box" id="respBox"></div>
-      </div>
-
+    <div class="form-row">
+      <div><label>Username</label><input id="username" type="text" placeholder="username" /></div>
+      <div><label>Password</label><input id="password" type="password" value="India123" /></div>
     </div>
   </div>
+
+  <div class="section">
+    <div class="section-title"><i class="ti ti-users" aria-hidden="true"></i> Members <span id="member-count" style="font-size:12px;font-weight:400;color:var(--color-text-tertiary)">(2)</span></div>
+    <div id="members-container"></div>
+    <button class="btn-submit" onclick="addMember()"><i class="ti ti-plus" aria-hidden="true" ></i> Add member</button>
+  </div>
+
+      <div class="form-row one">
+      <div><label>API URL</label><input id="api-url" type="text" value="http://127.0.0.1:5000/pf_new_onboarding" placeholder="http://..." /></div>
+    </div>
+    <br/>
+
+  <button class="btn-submit" id="submit-btn" onclick="submitForm()">
+    <i class="ti ti-send" aria-hidden="true"></i> Submit onboarding
+  </button>
+
+  <div id="response-box"></div>
 </div>
-
-<div class="toast-wrap"><div class="toast" id="toast"></div></div>
 
 <script>
-let mc = 0;
+const QUAL_OPTIONS=[
+  {v:"",l:"— Select —"},
+  {v:"1",l:"1 — Illiterate"},
+  {v:"3",l:"3 — Non-matric"},
+  {v:"4",l:"4 — Matric"},
+  {v:"5",l:"5 — Senior secondary"},
+  {v:"6",l:"6 — Graduate"},
+  {v:"7",l:"7 — Post-graduate"},
+  {v:"8",l:"8 — Doctorate"},
+  {v:"9",l:"9 — Technical (professional)"},
+];
 
-function addMember() {
-  mc++;
-  const id = mc;
-  const div = document.createElement('div');
-  div.className = 'member-block';
-  div.id = 'mb' + id;
-  div.innerHTML = `
-<div class="mb-head">
-  <div class="mb-title">Member <span class="mb-num">#${id}</span></div>
-  <button class="rm-btn" onclick="removeMember(${id})">✕ Remove</button>
-</div>
-<div class="mb-body">
-  <div class="g2">
-    <div class="field"><label>UAN Number <span class="req">*</span></label><input type="text" data-f="uan_no"></div>
-    <div class="field"><label>Aadhar Number <span class="req">*</span></label><input type="text" data-f="aadhar_no"></div>
-  </div>
-  <div class="g2">
-    <div class="field"><label>Aadhar Name <span class="req">*</span></label><input type="text" data-f="aadhar_name"></div>
-    <div class="field"><label>Date of Birth <span class="req">*</span></label><input type="text" data-f="dob"></div>
-  </div>
-  <div class="g3">
-    <div class="field"><label>Qualification <span class="req">*</span></label><input type="text" data-f="qualification"></div>
-    <div class="field"><label>Date of Joining <span class="req">*</span></label><input type="text" data-f="doj"></div>
-    <div class="field"><label>Wages <span class="req">*</span></label><input type="text" data-f="wages"></div>
-  </div>
-  <div class="g2">
-    <div class="field"><label>PAN Number <span class="req">*</span></label><input type="text" data-f="pan_number"></div>
-    <div class="field"><label>PAN Name <span class="req">*</span></label><input type="text" data-f="pan_name"></div>
-  </div>
-</div>`;
-  div.querySelectorAll('input').forEach(el => el.addEventListener('input', updatePreview));
-  document.getElementById('members').appendChild(div);
-  updateCount();
-  updatePreview();
+const defaultMembers=[
+  {uan_no:"",aadhar_no:"",aadhar_name:"",dob:"30/05/1996",qualification:"6",doj:"01/04/2026",wages:"15000",pan_number:"",pan_name:""},
+];
+
+let members=[...defaultMembers.map(m=>({...m}))];
+
+function qualSelect(val,idx){
+  return `<select onchange="updateMember(${idx},'qualification',this.value)">${QUAL_OPTIONS.map(o=>`<option value="${o.v}"${o.v===val?" selected":""}>${o.l}</option>`).join("")}</select>`;
 }
 
-function removeMember(id) {
-  const el = document.getElementById('mb' + id);
-  if (el) el.remove();
-  updateCount();
-  updatePreview();
+function inp(idx,field,ph,val,type="text"){
+  return `<input type="${type}" placeholder="${ph}" value="${val}" oninput="updateMember(${idx},'${field}',this.value)" />`;
 }
 
-function updateCount() {
-  const n = document.querySelectorAll('#members .member-block').length;
-  document.getElementById('mcnt').textContent = n + ' member' + (n !== 1 ? 's' : '') + ' added';
+function renderMembers(){
+  const c=document.getElementById("members-container");
+  c.innerHTML=members.map((m,i)=>`
+    <div class="member-block">
+      <div class="member-header">
+        <span class="member-label"><i class="ti ti-user" aria-hidden="true"></i> Member ${i+1}</span>
+        ${members.length>1?`<button class="btn-remove" onclick="removeMember(${i})"><i class="ti ti-trash" aria-hidden="true"></i> Remove</button>`:""}
+      </div>
+      <div class="form-row">${field("UAN No",inp(i,"uan_no","UAN number",m.uan_no))}${field("Aadhar No",inp(i,"aadhar_no","Aadhar number",m.aadhar_no))}</div>
+      <div class="form-row">${field("Aadhar Name",inp(i,"aadhar_name","Name on Aadhar",m.aadhar_name))}${field("Date of Birth",inp(i,"dob","DD/MM/YYYY",m.dob))}</div>
+      <div class="form-row">${field("Date of Joining",inp(i,"doj","DD/MM/YYYY",m.doj))}${field("Wages",inp(i,"wages","Monthly wages",m.wages))}</div>
+      <div class="form-row">${field("Qualification",qualSelect(m.qualification,i))}${field("PAN Number",inp(i,"pan_number","PAN",m.pan_number))}</div>
+      <div class="form-row one">${field("PAN Name",inp(i,"pan_name","Name on PAN",m.pan_name))}</div>
+    </div>
+  `).join("");
+  document.getElementById("member-count").textContent=`(${members.length})`;
 }
 
-function getPayload() {
-  const members = [];
-  document.querySelectorAll('#members .member-block').forEach(card => {
-    const o = {};
-    card.querySelectorAll('[data-f]').forEach(el => o[el.dataset.f] = el.value.trim());
-    members.push(o);
-  });
-  return {
-    username: document.getElementById('un').value.trim(),
-    password: document.getElementById('pw').value.trim(),
-    members
+function field(label,ctrl){
+  return `<div><label>${label}</label>${ctrl}</div>`;
+}
+
+function updateMember(idx,key,val){members[idx][key]=val}
+function addMember(){members.push({uan_no:"",aadhar_no:"",aadhar_name:"",dob:"",qualification:"",doj:"",wages:"",pan_number:"",pan_name:""});renderMembers()}
+function removeMember(idx){members.splice(idx,1);renderMembers()}
+
+async function submitForm(){
+  const url=document.getElementById("api-url").value.trim();
+  const btn=document.getElementById("submit-btn");
+  const box=document.getElementById("response-box");
+  if(!url){alert("Please enter an API URL");return}
+  const payload={
+    username:document.getElementById("username").value,
+    password:document.getElementById("password").value,
+    members:members.map(m=>({...m}))
   };
-}
-
-function updatePreview() {
-  document.getElementById('payloadPreview').textContent = JSON.stringify(getPayload(), null, 2);
-}
-
-['un','pw'].forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
-updatePreview();
-
-async function sendRequest() {
-  const url = document.getElementById('apiUrl').value.trim();
-  if (!url) { showToast('⚠ Enter the API endpoint URL'); return; }
-  const payload = getPayload();
-  const btn = document.getElementById('sendBtn');
-  const sp = document.getElementById('spinner');
-  const bt = document.getElementById('btnTxt');
-  btn.disabled = true; sp.style.display = 'block'; bt.textContent = 'Sending...';
-  const t0 = Date.now();
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+  btn.disabled=true;
+  btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Submitting…';
+  box.style.display="block";
+  box.textContent="Sending request…\n\nPayload:\n"+JSON.stringify(payload,null,2);
+  try{
+    const res=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
     });
-    const elapsed = Date.now() - t0;
-    const ct = res.headers.get('content-type') || '';
-    let body = ct.includes('application/json')
-      ? JSON.stringify(await res.json(), null, 2)
-      : await res.text();
-    showResp(res.status, body, elapsed);
-  } catch (e) {
-    showResp(0, 'Network Error:\n' + e.message, Date.now() - t0);
-  } finally {
-    btn.disabled = false; sp.style.display = 'none'; bt.textContent = '▶ Send Request';
+    let data;
+    try{data=await res.json()}catch{data=await res.text()}
+    const badge=res.ok?`<span class="status-badge badge-ok">✓ ${res.status}</span>`:`<span class="status-badge badge-err">✗ ${res.status}</span>`;
+    btn.innerHTML=`<i class="ti ti-send" aria-hidden="true"></i> Submit onboarding ${badge}`;
+    box.textContent="Status: "+res.status+" "+res.statusText+"\n\nResponse:\n"+(typeof data==="string"?data:JSON.stringify(data,null,2));
+  }catch(e){
+    btn.innerHTML='<i class="ti ti-send" aria-hidden="true"></i> Submit onboarding <span class="status-badge badge-err">✗ Error</span>';
+    box.textContent="Request failed:\n"+e.message+"\n\nNote: If this is a localhost API, the request is blocked by the browser's cross-origin policy when running from an iframe. Run this from your local environment or use a CORS proxy.";
   }
+  btn.disabled=false;
 }
 
-function showResp(status, body, elapsed) {
-  const sec = document.getElementById('respSection');
-  const pill = document.getElementById('statusPill');
-  sec.style.display = 'block';
-  document.getElementById('respBox').textContent = body;
-  document.getElementById('respTime').textContent = elapsed + 'ms';
-  pill.className = 'status-pill';
-  if (status === 0) { pill.textContent = 'ERROR'; pill.classList.add('error'); }
-  else if (status >= 200 && status < 300) { pill.textContent = status + ' OK'; pill.classList.add('success'); }
-  else if (status >= 400 && status < 500) { pill.textContent = status + ' Client Error'; pill.classList.add('error'); }
-  else { pill.textContent = status + ' Server Error'; pill.classList.add('warning'); }
-}
-
-function resetAll() {
-  document.getElementById('un').value = '';
-  document.getElementById('pw').value = '';
-  document.getElementById('apiUrl').value = '';
-  document.getElementById('members').innerHTML = '';
-  mc = 0;
-  updateCount();
-  document.getElementById('respSection').style.display = 'none';
-  updatePreview();
-  showToast('✓ Form cleared');
-}
-
-function copyPayload() {
-  navigator.clipboard.writeText(JSON.stringify(getPayload(), null, 2))
-    .then(() => showToast('✓ Payload copied to clipboard'));
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+renderMembers();
 </script>
+</body>
+</html>
+
