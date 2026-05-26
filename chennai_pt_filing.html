@@ -357,6 +357,9 @@
 
   <!-- ── Buttons ── -->
   <div class="btn-wrap">
+   <button class="btn-reset" onclick="copyPayload()">
+  📋 Copy Payload
+</button>
     <button class="btn-submit" onclick="submitForm()">🚀 Submit to API</button>
     <button class="btn-reset" onclick="resetForm()">↺ Reset</button>
   </div>
@@ -364,6 +367,28 @@
 </div><!-- /page-wrap -->
 
 <script>
+ function copyPayload() {
+  const payload = buildPayload();
+  const err = validateForm(payload);
+  if (err) { showResponse(err, true); return; }
+
+  const json = JSON.stringify(payload, null, 2);
+
+  navigator.clipboard.writeText(json).then(() => {
+    showResponse('📋 Payload copied to clipboard!\n\n' + json, false);
+  }).catch(() => {
+    // Fallback for older browsers / non-HTTPS
+    const ta = document.createElement('textarea');
+    ta.value = json;
+    ta.style.position = 'fixed';
+    ta.style.opacity  = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showResponse('📋 Payload copied to clipboard!\n\n' + json, false);
+  });
+}
 // ── Location fields toggle ──────────────────────────────────────────
 const LOC_ROWS = ['row_doorno', 'row_zone', 'row_area', 'row_street'];
 
