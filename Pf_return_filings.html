@@ -192,6 +192,14 @@ const RETURN_TYPE_OPTIONS=[
   {v:"3",l:"3 — Revised Return"},
 ];
 
+const MARITAL_OPTIONS=[
+  {v:"",l:"— Select Marital Status —"},
+  {v:"M",l:"M — Married"},
+  {v:"U",l:"U — Un-Married"},
+  {v:"W",l:"W — Widow/Widower"},
+  {v:"D",l:"D — Divorcee"},
+];
+
 const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function currentMonthLabel(){
@@ -199,7 +207,7 @@ function currentMonthLabel(){
   return MONTH_NAMES[d.getMonth()]+" "+d.getFullYear();
 }
 
-let members=[{uan_no:"",aadhar_no:"",aadhar_name:"",dob:"30/05/1996",qualification:"6",doj:"01/04/2026",wages:"15000",pan_number:"",pan_name:""}];
+let members=[{uan_no:"",aadhar_no:"",aadhar_name:"",dob:"30/05/1996",qualification:"6",doj:"01/04/2026",wages:"15000",pan_number:"",pan_name:"",marital_status:""}];
 let months=[{Month:currentMonthLabel(),Return_type:"",Return_file:"",_fileName:"",_fileSize:""}];
 
 /* ── helpers ── */
@@ -240,12 +248,15 @@ function renderMembers(){
       <div class="row row-1">
         ${fld("PAN Name",inp(m.pan_name,"Name on PAN",`updateM(${i},'pan_name',this.value)`))}
       </div>
+      <div class="row row-1">
+        ${fld("Marital Status",sel(MARITAL_OPTIONS,m.marital_status,`updateM(${i},'marital_status',this.value)`))}
+      </div>
     </div>
   `).join("");
   document.getElementById("member-count").textContent=`(${members.length})`;
 }
 function updateM(i,k,v){members[i][k]=v}
-function addMember(){members.push({uan_no:"",aadhar_no:"",aadhar_name:"",dob:"",qualification:"",doj:"",wages:"",pan_number:"",pan_name:""});renderMembers()}
+function addMember(){members.push({uan_no:"",aadhar_no:"",aadhar_name:"",dob:"",qualification:"",doj:"",wages:"",pan_number:"",pan_name:"",marital_status:""});renderMembers()}
 function removeMember(i){members.splice(i,1);renderMembers()}
 
 /* ── months ── */
