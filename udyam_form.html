@@ -1376,7 +1376,11 @@
       const districtEl = document.getElementById('u_' + unitKey + '_district');
       if (stateEl) {
         stateEl.addEventListener('change', function() {
-          onStateChange('u_' + unitKey + '_state', 'u_' + unitKey + '_district');
+          // Read the current ID of this element (may have been renamed by renameUnit)
+          const currentStateId = this.id;
+          // Derive the district ID by replacing '_state' suffix with '_district'
+          const currentDistrictId = currentStateId.replace(/_state$/, '_district');
+          onStateChange(currentStateId, currentDistrictId);
         });
       }
       // If data has state, set it and trigger district load
