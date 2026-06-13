@@ -698,223 +698,6 @@
 
 
     /* ══════════════════════════════════════════════
-     LIVE LOG MONITOR (fixed bottom drawer)
-  ══════════════════════════════════════════════ */
-    .log-monitor {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 800;
-      background: #07090f;
-      border-top: 2px solid #2a3550;
-      transition: height 0.3s ease;
-      height: 42px;
-      overflow: hidden;
-      font-family: 'Courier New', monospace;
-    }
-
-    .log-monitor.expanded {
-      height: 300px;
-    }
-
-    .log-topbar {
-      height: 42px;
-      padding: 0 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      user-select: none;
-      border-bottom: 1px solid #2a3550;
-      background: #0d1321;
-    }
-
-    .log-status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #6b7a99;
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-
-    .log-status-dot.running {
-      background: #22c55e;
-      animation: ldot 1s infinite;
-    }
-
-    .log-status-dot.error {
-      background: #ef4444;
-    }
-
-    .log-status-dot.waiting {
-      background: #f97316;
-      animation: ldot 0.8s infinite;
-    }
-
-    @keyframes ldot {
-
-      0%,
-      100% {
-        opacity: 1
-      }
-
-      50% {
-        opacity: 0.3
-      }
-    }
-
-    .log-topbar-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #6b7a99;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .log-topbar-status {
-      font-size: 12px;
-      color: #a8b4c8;
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .log-expand-btn {
-      background: none;
-      border: none;
-      color: #6b7a99;
-      cursor: pointer;
-      font-size: 14px;
-      padding: 4px 8px;
-    }
-
-    .log-expand-btn:hover {
-      color: #f97316;
-    }
-
-    .log-clear-btn {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border-radius: 5px;
-      font-size: 11px;
-      padding: 3px 10px;
-      cursor: pointer;
-    }
-
-    .log-clear-btn:hover {
-      background: rgba(239, 68, 68, 0.2);
-    }
-
-    .log-body {
-      height: calc(300px - 42px);
-      overflow-y: auto;
-      padding: 10px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .log-line {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      font-size: 12px;
-      line-height: 1.5;
-      padding: 2px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      animation: lfade 0.2s ease;
-    }
-
-    @keyframes lfade {
-      from {
-        opacity: 0;
-        transform: translateY(4px)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    .log-time {
-      color: #3a4a6b;
-      flex-shrink: 0;
-      width: 60px;
-    }
-
-    .log-badge {
-      flex-shrink: 0;
-      width: 56px;
-      text-align: center;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 4px;
-      letter-spacing: 0.04em;
-    }
-
-    .log-badge.INFO {
-      background: rgba(34, 197, 94, 0.15);
-      color: #22c55e;
-    }
-
-    .log-badge.WARNING {
-      background: rgba(234, 179, 8, 0.15);
-      color: #eab308;
-    }
-
-    .log-badge.ERROR {
-      background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
-    }
-
-    .log-badge.CRITICAL {
-      background: rgba(249, 115, 22, 0.2);
-      color: #f97316;
-    }
-
-    .log-badge.DEBUG {
-      background: rgba(107, 122, 153, 0.15);
-      color: #6b7a99;
-    }
-
-    .log-badge.PING {
-      display: none;
-    }
-
-    .log-msg {
-      color: #c8d4e8;
-      flex: 1;
-      word-break: break-all;
-    }
-
-    .log-msg.ERROR {
-      color: #f87171;
-    }
-
-    .log-msg.CRITICAL {
-      color: #fb923c;
-    }
-
-    .log-msg.WARNING {
-      color: #facc15;
-    }
-
-    .log-body::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .log-body::-webkit-scrollbar-thumb {
-      background: #2a3550;
-      border-radius: 2px;
-    }
-
-    /* ══════════════════════════════════════════════
      OTP MODAL
   ══════════════════════════════════════════════ */
     .otp-overlay {
@@ -1301,14 +1084,16 @@
               <input type="text" id="addr_pin" placeholder="6-digit PIN" maxlength="6">
             </div>
             <div class="field">
-              <label>State Code <span class="req">*</span></label>
-              <input type="text" id="addr_state" placeholder="e.g. 33 for Tamil Nadu">
-              <span class="hint">NIC state code</span>
+              <label>State <span class="req">*</span></label>
+              <select id="addr_state" onchange="onStateChange('addr_state','addr_district')">
+                <option value="">-- Select State --</option>
+              </select>
             </div>
             <div class="field">
-              <label>District Code <span class="req">*</span></label>
-              <input type="text" id="addr_district" placeholder="e.g. 582">
-              <span class="hint">NIC district code</span>
+              <label>District <span class="req">*</span></label>
+              <select id="addr_district" disabled>
+                <option value="">-- Select District --</option>
+              </select>
             </div>
           </div>
         </div>
@@ -1409,24 +1194,35 @@
             </div>
             <!-- nic_activity -->
             <div class="field">
-              <label>NIC Activity Code <span class="req">*</span></label>
-              <input type="text" id="nic_activity" placeholder="e.g. 3">
+              <label>NIC Activity <span class="req">*</span></label>
+              <select id="nic_activity" onchange="onNicActivityChange(this.value)">
+                <option value="">Select NIC Activity</option>
+                <option value="1">1 - Manufacturing</option>
+                <option value="2">2 - Services</option>
+                <option value="3">3 - Trading</option>
+              </select>
             </div>
           </div>
           <hr class="divider">
           <div class="field-group-label">NIC Code Hierarchy</div>
-          <div class="grid grid-3">
+          <div class="grid grid-3" id="nic-hierarchy" style="display:none;">
             <div class="field">
               <label>NIC 2-digit Code</label>
-              <input type="text" id="nic2" placeholder="e.g. 45" maxlength="2">
+              <select id="nic2" onchange="onNic2Change(this.value)">
+                <option value="">-- Select Section --</option>
+              </select>
             </div>
             <div class="field">
               <label>NIC 4-digit Code</label>
-              <input type="text" id="nic4" placeholder="e.g. 4510" maxlength="4">
+              <select id="nic4" onchange="onNic4Change(this.value)" disabled>
+                <option value="">-- Select Sub-section --</option>
+              </select>
             </div>
             <div class="field">
               <label>NIC 5-digit Code</label>
-              <input type="text" id="nic5" placeholder="e.g. 45101" maxlength="5">
+              <select id="nic5" disabled>
+                <option value="">-- Select Item --</option>
+              </select>
             </div>
           </div>
         </div>
@@ -1568,11 +1364,22 @@
         <div class="field"><label>Road</label><input type="text" id="u_${unitKey}_road" placeholder="Road" value="${d.road || ''}"></div>
         <div class="field"><label>City</label><input type="text" id="u_${unitKey}_city" placeholder="City" value="${d.city || ''}"></div>
         <div class="field"><label>PIN Code</label><input type="text" id="u_${unitKey}_pin" placeholder="PIN" maxlength="6" value="${d.pin || ''}"></div>
-        <div class="field"><label>State Code</label><input type="text" id="u_${unitKey}_state" placeholder="State code" value="${d.state || ''}"></div>
-        <div class="field"><label>District Code</label><input type="text" id="u_${unitKey}_district" placeholder="District code" value="${d.district || ''}"></div>
+        <div class="field"><label>State</label><select id="u_${unitKey}_state" onchange="onStateChange('u_${unitKey}_state','u_${unitKey}_district')"><option value="">-- Select State --</option></select></div>
+        <div class="field"><label>District</label><select id="u_${unitKey}_district" disabled><option value="">-- Select District --</option></select></div>
       </div>
     `;
       c.appendChild(div);
+      // Populate state dropdown for this unit
+      populateStateSelect('u_' + unitKey + '_state');
+      // If data has state, set it and trigger district load
+      if (d.state) {
+        const stateEl = document.getElementById('u_' + unitKey + '_state');
+        if (stateEl) { stateEl.value = d.state; onStateChange('u_' + unitKey + '_state', 'u_' + unitKey + '_district'); }
+        if (d.district) {
+          const distEl = document.getElementById('u_' + unitKey + '_district');
+          if (distEl) distEl.value = d.district;
+        }
+      }
     }
 
     function renameUnit(oldKey, input) {
@@ -1604,6 +1411,14 @@
     function getVal(id) {
       const el = document.getElementById(id);
       return el ? el.value.trim() : '';
+    }
+
+    // Extract the leading numeric code from a NIC section name like "01-Crop..." → "01"
+    // or "0146-Raising..." → "0146" or "01462-Production..." → "01462"
+    function extractNicCode(str) {
+      if (!str) return '';
+      const m = str.match(/^(\d+)/);
+      return m ? m[1] : str;
     }
 
     function buildJSON() {
@@ -1664,9 +1479,9 @@
         major_activity: getVal('major_activity'),
         nic_activity: getVal('nic_activity'),
         nic: {
-          nic2: getVal('nic2'),
-          nic4: getVal('nic4'),
-          nic5: getVal('nic5')
+          nic2: extractNicCode(getVal('nic2')),
+          nic4: extractNicCode(getVal('nic4')),
+          nic5: extractNicCode(getVal('nic5'))
         },
         employees: {
           male: getVal('emp_male') || '0',
@@ -1815,6 +1630,31 @@
         if (el) el.value = s[k];
       });
 
+      // Trigger NIC cascade
+      onNicActivityChange(s.nic_activity);
+      // Set nic2 then trigger nic4
+      setTimeout(() => {
+        const nic2El = document.getElementById('nic2');
+        if (nic2El) {
+          // Find the matching section in Manufacturing
+          const mSections = NIC_DATA['Manufacturing'];
+          const matchSec = Object.keys(mSections).find(sec => sec.startsWith('45'));
+          if (matchSec) { nic2El.value = matchSec; onNic2Change(matchSec); }
+          const nic4El = document.getElementById('nic4');
+          if (nic4El) {
+            const matchSub = Object.keys(mSections[matchSec] || {}).find(s => s.startsWith('4510'));
+            if (matchSub) { nic4El.value = matchSub; onNic4Change(matchSub); }
+          }
+        }
+      }, 50);
+
+      // Trigger state/district cascade for official address
+      onStateChange('addr_state', 'addr_district');
+      setTimeout(() => {
+        const distEl = document.getElementById('addr_district');
+        if (distEl) distEl.value = s.addr_district;
+      }, 50);
+
       updateEmpTotal();
 
       // Load units
@@ -1828,6 +1668,125 @@
       showToast('Sample data loaded!', 'success');
       generateJSON();
     }
+
+    // ─── NIC CASCADE ─────────────────────────────────────────────────────────
+    // Map NIC_DATA category key → nic_activity value
+    const NIC_CAT_MAP = { 'Manufacturing': '1', 'Services': '2', 'Trading': '3' };
+    const NIC_CAT_REVERSE = { '1': 'Manufacturing', '2': 'Services', '3': 'Trading' };
+
+    function onNicActivityChange(val) {
+      // Show/hide NIC hierarchy
+      const hierEl = document.getElementById('nic-hierarchy');
+      const nic2El = document.getElementById('nic2');
+      const nic4El = document.getElementById('nic4');
+      const nic5El = document.getElementById('nic5');
+      // Reset sub-selects
+      nic2El.innerHTML = '<option value="">-- Select Section --</option>';
+      nic4El.innerHTML = '<option value="">-- Select Sub-section --</option>';
+      nic5El.innerHTML = '<option value="">-- Select Item --</option>';
+      nic4El.disabled = true;
+      nic5El.disabled = true;
+
+      if (!val) { hierEl.style.display = 'none'; return; }
+      hierEl.style.display = '';
+
+      const catName = NIC_CAT_REVERSE[val];
+      if (!catName || !NIC_DATA[catName]) return;
+
+      const sections = NIC_DATA[catName];
+      Object.keys(sections).forEach(sectionName => {
+        const opt = document.createElement('option');
+        opt.value = sectionName;
+        opt.textContent = sectionName;
+        nic2El.appendChild(opt);
+      });
+    }
+
+    function onNic2Change(sectionName) {
+      const nic4El = document.getElementById('nic4');
+      const nic5El = document.getElementById('nic5');
+      nic4El.innerHTML = '<option value="">-- Select Sub-section --</option>';
+      nic5El.innerHTML = '<option value="">-- Select Item --</option>';
+      nic5El.disabled = true;
+      if (!sectionName) { nic4El.disabled = true; return; }
+
+      const catVal = document.getElementById('nic_activity').value;
+      const catName = NIC_CAT_REVERSE[catVal];
+      if (!catName) return;
+      const subsections = NIC_DATA[catName][sectionName];
+      if (!subsections) return;
+
+      nic4El.disabled = false;
+      Object.keys(subsections).forEach(subcode => {
+        const opt = document.createElement('option');
+        opt.value = subcode;
+        opt.textContent = subcode;
+        nic4El.appendChild(opt);
+      });
+    }
+
+    function onNic4Change(subcode) {
+      const nic5El = document.getElementById('nic5');
+      nic5El.innerHTML = '<option value="">-- Select Item --</option>';
+      if (!subcode) { nic5El.disabled = true; return; }
+
+      const catVal = document.getElementById('nic_activity').value;
+      const catName = NIC_CAT_REVERSE[catVal];
+      const sectionName = document.getElementById('nic2').value;
+      if (!catName || !sectionName) return;
+      const items = NIC_DATA[catName][sectionName][subcode];
+      if (!items || items.length === 0) { nic5El.disabled = true; return; }
+
+      nic5El.disabled = false;
+      items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        nic5El.appendChild(opt);
+      });
+    }
+
+    // ─── STATE / DISTRICT CASCADE ─────────────────────────────────────────────
+    function populateStateSelect(stateElId) {
+      const el = document.getElementById(stateElId);
+      if (!el || el.tagName !== 'SELECT') return;
+      el.innerHTML = '<option value="">-- Select State --</option>';
+      SD_DATA.states.forEach(state => {
+        const opt = document.createElement('option');
+        opt.value = state.value;
+        opt.textContent = state.name;
+        el.appendChild(opt);
+      });
+    }
+
+    function onStateChange(stateElId, districtElId) {
+      const stateEl = document.getElementById(stateElId);
+      const distEl = document.getElementById(districtElId);
+      if (!stateEl || !distEl) return;
+      const stateVal = stateEl.value;
+      distEl.innerHTML = '<option value="">-- Select District --</option>';
+      distEl.disabled = true;
+      if (!stateVal) return;
+      const stateObj = SD_DATA.states.find(s => s.value === stateVal);
+      if (!stateObj) return;
+      distEl.disabled = false;
+      stateObj.districts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.value;
+        opt.textContent = d.name;
+        distEl.appendChild(opt);
+      });
+    }
+
+    // ─── INIT STATE SELECTS ───────────────────────────────────────────────────
+    function initStateSelects() {
+      populateStateSelect('addr_state');
+      // Unit state selects are built dynamically; handled in addUnit
+    }
+
+    // Override addUnit to populate state select after DOM injection
+    const _origAddUnit = addUnit;
+    // We'll patch addUnit after definition to init state selects for new units
 
     // Init
     document.getElementById('toggle-btn').style.display = 'flex';
@@ -1910,152 +1869,6 @@
     // ══════════════════════════════════════════════════════════════════════
     //  LIVE LOG MONITOR + OTP HANDLER
     // ══════════════════════════════════════════════════════════════════════
-
-    let logPanelOpen = false;
-    let otpTimerInterval = null;
-
-    // ─── Log Panel ─────────────────────────────────────────────────────
-    function toggleLogPanel() {
-      logPanelOpen = !logPanelOpen;
-      document.getElementById('logMonitor').classList.toggle('expanded', logPanelOpen);
-      document.getElementById('logExpandBtn').textContent = logPanelOpen ? '▼' : '▲';
-    }
-
-    function clearLogs(e) {
-      e.stopPropagation();
-      document.getElementById('logBody').innerHTML = '';
-    }
-
-    function escHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    function appendLog(entry) {
-      if (entry.level === 'PING') return;
-      const body = document.getElementById('logBody');
-      const lastMsg = document.getElementById('logLastMsg');
-      const dot = document.getElementById('logDot');
-
-      lastMsg.textContent = entry.message;
-      dot.className = 'log-status-dot';
-      if (['ERROR', 'CRITICAL'].includes(entry.level)) dot.classList.add('error');
-      else if (entry.level === 'WARNING') dot.classList.add('waiting');
-      else dot.classList.add('running');
-
-      const line = document.createElement('div');
-      line.className = 'log-line';
-      line.innerHTML = `
-      <span class="log-time">${entry.time}</span>
-      <span class="log-badge ${entry.level}">${entry.level}</span>
-      <span class="log-msg ${entry.level}">${escHtml(entry.message)}</span>
-    `;
-      body.appendChild(line);
-      body.scrollTop = body.scrollHeight;
-
-      // Auto-open on first real log
-      if (!logPanelOpen) {
-        logPanelOpen = true;
-        document.getElementById('logMonitor').classList.add('expanded');
-        document.getElementById('logExpandBtn').textContent = '▼';
-      }
-    }
-
-    // ─── SSE: Live log stream ───────────────────────────────────────────
-    (function startLogStream() {
-      const es = new EventSource(getAPIBase() + '/log_stream');
-      es.onmessage = (e) => {
-        try { appendLog(JSON.parse(e.data)); } catch { }
-      };
-      es.onerror = () => {
-        document.getElementById('logDot').className = 'log-status-dot error';
-        document.getElementById('logLastMsg').textContent = 'Log stream disconnected — retrying...';
-        setTimeout(startLogStream, 5000);
-        es.close();
-      };
-    })();
-
-    // ─── SSE: OTP request stream ────────────────────────────────────────
-    (function startOtpStream() {
-      const es = new EventSource(getAPIBase() + '/otp_stream');
-      es.onmessage = (e) => {
-        if (e.data === 'connected' || e.data === 'heartbeat') return;
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.event === 'otp_needed') showOtpModal();
-        } catch { }
-      };
-      es.onerror = () => { setTimeout(startOtpStream, 5000); es.close(); };
-    })();
-
-    // ─── OTP Modal ──────────────────────────────────────────────────────
-    function showOtpModal() {
-      document.getElementById('mobileOtpInput').value = '';
-      document.getElementById('emailOtpInput').value = '';
-      document.getElementById('otpError').style.display = 'none';
-      document.getElementById('otpOverlay').classList.add('show');
-      document.getElementById('logDot').className = 'log-status-dot waiting';
-      document.getElementById('logLastMsg').textContent = '⏳ Waiting for OTP input from user...';
-      document.getElementById('mobileOtpInput').focus();
-
-      // Countdown timer — 5 minutes
-      let secs = 300;
-      clearInterval(otpTimerInterval);
-      otpTimerInterval = setInterval(() => {
-        secs--;
-        const m = String(Math.floor(secs / 60)).padStart(2, '0');
-        const s = String(secs % 60).padStart(2, '0');
-        document.getElementById('otpTimer').textContent = `OTP expires in ${m}:${s}`;
-        if (secs <= 0) {
-          clearInterval(otpTimerInterval);
-          document.getElementById('otpOverlay').classList.remove('show');
-          appendLog({ level: 'ERROR', message: '⏰ OTP timed out — automation may have failed', time: new Date().toTimeString().slice(0, 8) });
-        }
-      }, 1000);
-    }
-
-    async function submitOtp() {
-      const mobile_otp = document.getElementById('mobileOtpInput').value.trim();
-      const email_otp = document.getElementById('emailOtpInput').value.trim();
-      const errEl = document.getElementById('otpError');
-      const btn = document.getElementById('otpSubmitBtn');
-
-      errEl.style.display = 'none';
-      if (!mobile_otp || !email_otp) {
-        errEl.textContent = 'Both Mobile OTP and Email OTP are required.';
-        errEl.style.display = 'block'; return;
-      }
-      if (mobile_otp.length < 4 || email_otp.length < 4) {
-        errEl.textContent = 'OTP must be at least 4 digits.';
-        errEl.style.display = 'block'; return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = '⏳ Submitting...';
-
-      try {
-        const res = await fetch(getAPIBase() + '/otp_submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mobile_otp, email_otp })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-          clearInterval(otpTimerInterval);
-          document.getElementById('otpOverlay').classList.remove('show');
-          appendLog({ level: 'INFO', message: '✅ OTP submitted — automation continuing...', time: new Date().toTimeString().slice(0, 8) });
-        } else {
-          errEl.textContent = data.message || 'OTP submission failed.';
-          errEl.style.display = 'block';
-        }
-      } catch (err) {
-        errEl.textContent = 'Network error: ' + err.message;
-        errEl.style.display = 'block';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '✅ Verify & Continue';
-      }
-    }
-
   </script>
 
   <!-- API Response Panel -->
@@ -2072,41 +1885,6 @@
   </div>
 
 
-  <!-- ══ LIVE LOG MONITOR ══════════════════════════════════════════════════ -->
-  <div class="log-monitor" id="logMonitor">
-    <div class="log-topbar" onclick="toggleLogPanel()">
-      <div class="log-status-dot" id="logDot"></div>
-      <span class="log-topbar-label">🖥 Automation Monitor</span>
-      <span class="log-topbar-status" id="logLastMsg">Waiting for automation to start...</span>
-      <button class="log-clear-btn" onclick="clearLogs(event)">Clear</button>
-      <button class="log-expand-btn" id="logExpandBtn">▲</button>
-    </div>
-    <div class="log-body" id="logBody"></div>
-  </div>
-
-  <!-- ══ OTP MODAL ═════════════════════════════════════════════════════════ -->
-  <div class="otp-overlay" id="otpOverlay">
-    <div class="otp-modal">
-      <div class="otp-pulse-ring">🔐</div>
-      <h2>OTP Verification</h2>
-      <p>Udyam portal has sent OTPs to your mobile and email.<br>Enter both to continue automation.</p>
-      <div class="otp-fields">
-        <div class="otp-field">
-          <label>📱 Mobile OTP</label>
-          <input type="text" id="mobileOtpInput" placeholder="— — — — — —" maxlength="6" inputmode="numeric"
-            oninput="this.value=this.value.replace(/\D/g,'')">
-        </div>
-        <div class="otp-field">
-          <label>📧 Email OTP</label>
-          <input type="text" id="emailOtpInput" placeholder="— — — — — —" maxlength="6" inputmode="numeric"
-            oninput="this.value=this.value.replace(/\D/g,'')">
-        </div>
-      </div>
-      <div class="otp-err" id="otpError"></div>
-      <button class="otp-submit-btn" id="otpSubmitBtn" onclick="submitOtp()">✅ Verify & Continue</button>
-      <div class="otp-timer-txt" id="otpTimer"></div>
-    </div>
-  </div>
 
 
   <!-- ══════════ REFERENCE DATA PANEL ══════════ -->
@@ -2617,6 +2395,9 @@
       children.classList.toggle('open');
       if (caret) caret.classList.toggle('open');
     }
+
+    // Init state/district dropdowns now that SD_DATA is available
+    initStateSelects();
   </script>
 
 </body>
