@@ -1364,16 +1364,23 @@
         <div class="field"><label>Road</label><input type="text" id="u_${unitKey}_road" placeholder="Road" value="${d.road || ''}"></div>
         <div class="field"><label>City</label><input type="text" id="u_${unitKey}_city" placeholder="City" value="${d.city || ''}"></div>
         <div class="field"><label>PIN Code</label><input type="text" id="u_${unitKey}_pin" placeholder="PIN" maxlength="6" value="${d.pin || ''}"></div>
-        <div class="field"><label>State</label><select id="u_${unitKey}_state" onchange="onStateChange('u_${unitKey}_state','u_${unitKey}_district')"><option value="">-- Select State --</option></select></div>
+        <div class="field"><label>State</label><select id="u_${unitKey}_state"><option value="">-- Select State --</option></select></div>
         <div class="field"><label>District</label><select id="u_${unitKey}_district" disabled><option value="">-- Select District --</option></select></div>
       </div>
     `;
       c.appendChild(div);
       // Populate state dropdown for this unit
       populateStateSelect('u_' + unitKey + '_state');
+      // Wire up state→district cascade via addEventListener (avoids innerHTML quoting issues)
+      const stateEl = document.getElementById('u_' + unitKey + '_state');
+      const districtEl = document.getElementById('u_' + unitKey + '_district');
+      if (stateEl) {
+        stateEl.addEventListener('change', function() {
+          onStateChange('u_' + unitKey + '_state', 'u_' + unitKey + '_district');
+        });
+      }
       // If data has state, set it and trigger district load
       if (d.state) {
-        const stateEl = document.getElementById('u_' + unitKey + '_state');
         if (stateEl) { stateEl.value = d.state; onStateChange('u_' + unitKey + '_state', 'u_' + unitKey + '_district'); }
         if (d.district) {
           const distEl = document.getElementById('u_' + unitKey + '_district');
