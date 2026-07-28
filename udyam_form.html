@@ -1185,11 +1185,10 @@
             <!-- major_activity -->
             <div class="field">
               <label>Major Activity <span class="req">*</span></label>
-              <select id="major_activity">
+              <select id="major_activity" onchange="onMajorActivityChange(this.value)">
                 <option value="">Select Activity</option>
                 <option value="1">Manufacturing</option>
                 <option value="2">Services</option>
-                <option value="3">Trading</option>
               </select>
             </div>
             <!-- nic_activity -->
@@ -1200,6 +1199,17 @@
                 <option value="1">1 - Manufacturing</option>
                 <option value="2">2 - Services</option>
                 <option value="3">3 - Trading</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-2" id="major-activity-service-wrapper" style="display:none;">
+            <!-- major_activity_service (shown only when Major Activity = Services) -->
+            <div class="field">
+              <label>Major Activity Under Services <span class="req">*</span></label>
+              <select id="major_activity_service">
+                <option value="">Select</option>
+                <option value="1">Non-Trading</option>
+                <option value="2">Trading</option>
               </select>
             </div>
           </div>
@@ -1488,6 +1498,7 @@
         ifsc: getVal('ifsc'),
         account_number: getVal('account_number'),
         major_activity: getVal('major_activity'),
+        major_activity_service: getVal('major_activity') === '2' ? getVal('major_activity_service') : undefined,
         nic_activity: getVal('nic_activity'),
         nic: {
           nic2: extractNicCode(getVal('nic2')),
@@ -1641,6 +1652,8 @@
         if (el) el.value = s[k];
       });
 
+      // Trigger Major Activity cascade
+      onMajorActivityChange(s.major_activity);
       // Trigger NIC cascade
       onNicActivityChange(s.nic_activity);
       // Set nic2 then trigger nic4
@@ -1678,6 +1691,18 @@
 
       showToast('Sample data loaded!', 'success');
       generateJSON();
+    }
+
+    // ─── MAJOR ACTIVITY (Manufacturing / Services) ────────────────────────────
+    function onMajorActivityChange(val) {
+      const wrapper = document.getElementById('major-activity-service-wrapper');
+      const serviceEl = document.getElementById('major_activity_service');
+      if (val === '2') {
+        wrapper.style.display = '';
+      } else {
+        wrapper.style.display = 'none';
+        if (serviceEl) serviceEl.value = '';
+      }
     }
 
     // ─── NIC CASCADE ─────────────────────────────────────────────────────────
