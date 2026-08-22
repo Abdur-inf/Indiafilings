@@ -170,7 +170,12 @@
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('https://indiafilings-automation-req.onrender.com/ITR/login', {
+                // If running locally via file:// protocol, use proxy. If using a local server, direct url can work if backend allows.
+                const targetUrl = window.location.protocol === 'file:' 
+                    ? 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://indiafilings-automation-req.onrender.com/ITR/login')
+                    : 'https://indiafilings-automation-req.onrender.com/ITR/login';
+
+                const response = await fetch(targetUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -179,6 +184,30 @@
                 });
 
                 const data = await response.json();
+
+                // Handle API error structure (like HTTP 401 Unauthorized or messages with error codes)
+                let apiErrorMessage = "";
+                if (data.responses) {
+                    data.responses.forEach(item => {
+                        // Check if response has error message code elements (e.g. EF00027)
+                        if (item.response && item.response.messages) {
+                            item.response.messages.forEach(msg => {
+                                if (msg.code && msg.code !== "EF00000") {
+                                    apiErrorMessage = msg.desc || "Authentication error occurred.";
+                                }
+                            });
+                        }
+                        // Check if status code indicates 401 or failure
+                        if (item.status_code === 401) {
+                            apiErrorMessage = "HTTP 401 Unauthorized: Invalid PAN or Password.";
+                        }
+                    });
+                }
+
+                if (apiErrorMessage) {
+                    showError(apiErrorMessage);
+                    return;
+                }
 
                 if (data.status && data.responses) {
                     processDashboardData(data.responses);
@@ -200,21 +229,18 @@
         }
 
         function processDashboardData(responses) {
-            // Hide Login, Show Dashboard
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
 
-            // 1. Extract Info from Index 0 & 1 & 2
             let profileObj = {};
             let clientIp = "N/A";
 
             responses.forEach(item => {
-                // Check if response contains nested stringified profile JSON (Index 2 case)
-                if (typeof item.response === 'string') {
+                if (typeof item.response === 'string' && item.response.startsWith('{')) {
                     try {
                         profileObj = JSON.parse(item.response);
                     } catch (e) {
-                        console.error("Failed to parse stringified profile JSON", e);
+                        console.error("Failed to parse profile JSON", e);
                     }
                 } else if (item.response && typeof item.response === 'object') {
                     if (item.response.clientIp) clientIp = item.response.clientIp;
@@ -229,7 +255,6 @@
             document.getElementById('user-badge').textContent = `PAN: ${profileObj.userId || document.getElementById('pan').value}`;
             document.getElementById('user-badge').classList.remove('hidden');
 
-            // Render Profile Card
             const profileContainer = document.getElementById('profile-details');
             profileContainer.innerHTML = `
                 <div><span class="text-slate-400 block text-xs">Full Name</span><strong class="text-slate-700">${profileObj.firstName || ''} ${profileObj.midName || ''} ${profileObj.lastName || profileObj.fullName || 'N/A'}</strong></div>
@@ -241,7 +266,6 @@
                 <div class="col-span-2"><span class="text-slate-400 block text-xs">Address</span><strong class="text-slate-700">${profileObj.addrLine1Txt || ''}, ${profileObj.addrLine4Txt || ''} - ${profileObj.pinCd || ''}</strong></div>
             `;
 
-            // 2. Extract Proceedings (Index 3)
             const proceedingsContainer = document.getElementById('proceedings-list');
             proceedingsContainer.innerHTML = '';
             
@@ -271,7 +295,6 @@
                 proceedingsContainer.innerHTML = `<p class="text-sm text-slate-400 text-center py-4">No e-proceedings found.</p>`;
             }
 
-            // 3. Extract Notices & Base64 PDFs (Index 4)
             const noticeSelect = document.getElementById('notice-select');
             noticeSelect.innerHTML = `<option value="">-- Choose a notice to view --</option>`;
             globalNoticesData = [];
@@ -313,7 +336,6 @@
                 return;
             }
 
-            // Load base64 string into PDF iframe viewer
             iframe.src = `data:application/pdf;base64,${base64String}`;
             iframe.classList.remove('hidden');
             placeholder.classList.add('hidden');
