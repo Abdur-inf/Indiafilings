@@ -21,7 +21,7 @@
 
     <!-- Main Container -->
     <main class="max-w-6xl w-full mx-auto px-4 py-8 flex-grow">
-        
+
         <!-- Login Card Section -->
         <div id="login-section" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 border border-slate-100 transition-all duration-300">
             <div class="text-center mb-6">
@@ -62,7 +62,7 @@
 
         <!-- Dashboard View (Hidden initially) -->
         <div id="dashboard-section" class="hidden space-y-6">
-            
+
             <!-- Top Profile & Status Summary -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Profile Summary Card -->
@@ -92,7 +92,7 @@
 
             <!-- Proceedings & Notices Section Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
+
                 <!-- Proceedings List -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <h3 class="text-lg font-bold text-slate-800 border-b pb-2 mb-4 flex items-center space-x-2">
@@ -108,12 +108,17 @@
                     <h3 class="text-lg font-bold text-slate-800 border-b pb-2 mb-4 flex items-center space-x-2">
                         <i class="fa-solid fa-file-pdf text-rose-600"></i><span>Notice Documents Viewer</span>
                     </h3>
-                    
+
                     <div class="mb-3">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Select Notice Document</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Select Notice Document (grouped by Proceeding ID)</label>
                         <select id="notice-select" onchange="previewNoticePdf()" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
                             <option value="">-- Choose a notice to view --</option>
                         </select>
+                    </div>
+
+                    <!-- Selected Notice / Proceeding Info Bar -->
+                    <div id="notice-info" class="hidden mb-3 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-xs text-slate-700 grid grid-cols-2 gap-x-4 gap-y-1">
+                        <!-- Populated via JS -->
                     </div>
 
                     <!-- PDF Iframe Container -->
@@ -139,10 +144,11 @@
     <!-- JavaScript Logic -->
     <script>
         let globalNoticesData = [];
+        let globalProceedingsMap = {}; // proceedingReqId -> proceeding object
 
         async function handleLogin(event) {
             event.preventDefault();
-            
+
             const pan = document.getElementById('pan').value.trim().toUpperCase();
             const password = document.getElementById('password').value;
             const errorBanner = document.getElementById('error-banner');
@@ -171,7 +177,7 @@
 
             try {
                 // If running locally via file:// protocol, use proxy. If using a local server, direct url can work if backend allows.
-                const targetUrl = window.location.protocol === 'file:' 
+                const targetUrl = window.location.protocol === 'file:'
                     ? 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://indiafilings-automation-req.onrender.com/ITR/login')
                     : 'https://indiafilings-automation-req.onrender.com/ITR/login';
 
@@ -228,6 +234,10 @@
             errorBanner.classList.remove('hidden');
         }
 
+        function statusLabel(code) {
+            return code === 'O' ? 'Open' : (code === 'C' ? 'Closed' : (code || 'N/A'));
+        }
+
         function processDashboardData(responses) {
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
@@ -268,12 +278,18 @@
 
             const proceedingsContainer = document.getElementById('proceedings-list');
             proceedingsContainer.innerHTML = '';
-            
+
             let foundProceedings = [];
             responses.forEach(item => {
                 if (item.response && item.response.eProceedingPaginatedRequests) {
                     foundProceedings = item.response.eProceedingPaginatedRequests;
                 }
+            });
+
+            // Build a lookup map: proceedingReqId -> proceeding object, used for grouping notices later
+            globalProceedingsMap = {};
+            foundProceedings.forEach(proc => {
+                globalProceedingsMap[String(proc.proceedingReqId)] = proc;
             });
 
             if (foundProceedings.length > 0) {
@@ -286,7 +302,7 @@
                             </div>
                             <div class="text-xs text-slate-500 mt-1 flex justify-between">
                                 <span>Req ID: ${proc.proceedingReqId}</span>
-                                <span class="font-medium text-emerald-600">Status: ${proc.proceedingStatus === 'O' ? 'Open' : 'Closed'}</span>
+                                <span class="font-medium text-emerald-600">Status: ${statusLabel(proc.proceedingStatus)}</span>
                             </div>
                         </div>
                     `;
@@ -295,38 +311,107 @@
                 proceedingsContainer.innerHTML = `<p class="text-sm text-slate-400 text-center py-4">No e-proceedings found.</p>`;
             }
 
+            // ---- Notices: gather raw notice list + the canonical proceeding_ids ordering ----
             const noticeSelect = document.getElementById('notice-select');
             noticeSelect.innerHTML = `<option value="">-- Choose a notice to view --</option>`;
             globalNoticesData = [];
+            let orderedProceedingIds = [];
 
             responses.forEach(item => {
                 if (item.notice && item.notice.notice_base64) {
                     globalNoticesData = item.notice.notice_base64;
+                    if (Array.isArray(item.notice.proceeding_ids)) {
+                        orderedProceedingIds = item.notice.proceeding_ids;
+                    }
+                }
+                if (!orderedProceedingIds.length && Array.isArray(item.proceeding_ids)) {
+                    orderedProceedingIds = item.proceeding_ids;
                 }
             });
 
-            if (globalNoticesData.length > 0) {
-                globalNoticesData.forEach((notice, index) => {
-                    const label = `${notice.description || 'Notice'} (Sec: ${notice.noticeSection || 'N/A'})`;
-                    noticeSelect.innerHTML += `<option value="${index}">${label}</option>`;
-                });
-            } else {
+            renderNoticeDropdown(orderedProceedingIds);
+        }
+
+        // Groups globalNoticesData by proceeding_id and renders <optgroup> blocks
+        // ordered by orderedProceedingIds (falls back to the order notices appear in).
+        function renderNoticeDropdown(orderedProceedingIds) {
+            const noticeSelect = document.getElementById('notice-select');
+            noticeSelect.innerHTML = `<option value="">-- Choose a notice to view --</option>`;
+
+            if (!globalNoticesData.length) {
                 noticeSelect.innerHTML = `<option value="">No notices available</option>`;
+                return;
             }
+
+            // Group notice indices by their proceeding_id / proceedingReqId
+            const grouped = {};
+            globalNoticesData.forEach((notice, index) => {
+                const pid = String(notice.proceeding_id || notice.proceedingReqId || 'unknown');
+                if (!grouped[pid]) grouped[pid] = [];
+                grouped[pid].push(index);
+            });
+
+            // Decide group ordering: prefer the explicit proceeding_ids list, then any
+            // remaining groups not present in that list (kept in their natural order).
+            const idsInOrder = [...orderedProceedingIds.map(String)];
+            Object.keys(grouped).forEach(pid => {
+                if (!idsInOrder.includes(pid)) idsInOrder.push(pid);
+            });
+
+            idsInOrder.forEach(pid => {
+                const indices = grouped[pid];
+                if (!indices || !indices.length) return;
+
+                const proc = globalProceedingsMap[pid];
+                const groupLabel = proc
+                    ? `${proc.proceedingName} — AY ${proc.assessmentYear} · ${statusLabel(proc.proceedingStatus)} (ID ${pid})`
+                    : `Proceeding ID ${pid}`;
+
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = groupLabel;
+
+                indices.forEach(index => {
+                    const notice = globalNoticesData[index];
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${notice.description || 'Notice'} (Sec: ${notice.noticeSection || 'N/A'})`;
+                    optgroup.appendChild(option);
+                });
+
+                noticeSelect.appendChild(optgroup);
+            });
         }
 
         function previewNoticePdf() {
             const index = document.getElementById('notice-select').value;
             const iframe = document.getElementById('pdf-viewer');
             const placeholder = document.getElementById('pdf-placeholder');
+            const infoBar = document.getElementById('notice-info');
 
             if (index === "" || !globalNoticesData[index]) {
                 iframe.classList.add('hidden');
                 placeholder.classList.remove('hidden');
+                infoBar.classList.add('hidden');
+                infoBar.innerHTML = '';
                 return;
             }
 
             const noticeItem = globalNoticesData[index];
+            const pid = String(noticeItem.proceeding_id || noticeItem.proceedingReqId || '');
+            const proc = globalProceedingsMap[pid];
+
+            // Populate the proceeding/notice info bar above the viewer
+            infoBar.innerHTML = `
+                <div><span class="text-slate-400 block">Proceeding</span><strong>${proc ? proc.proceedingName : 'N/A'}</strong></div>
+                <div><span class="text-slate-400 block">Proceeding ID</span><strong>${pid || 'N/A'}</strong></div>
+                <div><span class="text-slate-400 block">Assessment Year</span><strong>${proc ? proc.assessmentYear : 'N/A'}</strong></div>
+                <div><span class="text-slate-400 block">Status</span><strong>${proc ? statusLabel(proc.proceedingStatus) : 'N/A'}</strong></div>
+                <div><span class="text-slate-400 block">Notice Section</span><strong>${noticeItem.noticeSection || 'N/A'}</strong></div>
+                <div><span class="text-slate-400 block">Doc ID</span><strong>${noticeItem.satDocId || 'N/A'}</strong></div>
+                <div class="col-span-2"><span class="text-slate-400 block">Description</span><strong>${noticeItem.description || 'N/A'}</strong></div>
+            `;
+            infoBar.classList.remove('hidden');
+
             const base64String = noticeItem.base64;
 
             if (!base64String || base64String.trim() === "") {
@@ -346,6 +431,7 @@
             document.getElementById('login-section').classList.remove('hidden');
             document.getElementById('login-form').reset();
             document.getElementById('user-badge').classList.add('hidden');
+            document.getElementById('notice-info').classList.add('hidden');
         }
     </script>
 </body>
