@@ -231,6 +231,8 @@
       padding: 28px 36px;
       overflow-y: auto;
       max-width: 900px;
+      margin: 0 auto;
+      transition: margin-right 0.3s ease;
     }
 
     .section {
@@ -875,17 +877,8 @@
     </div>
   </div>
 
-  <!-- API CONFIG BAR -->
-  <div style="background:#1e293b;border-bottom:1px solid #2d3748;padding:8px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:70px;z-index:99;">
-    <span style="color:#94a3b8;font-size:12px;font-weight:600;white-space:nowrap;">🔗 API Base URL</span>
-    <input type="text" id="api_base_url" value="http://localhost:5000"
-      placeholder="http://localhost:5000"
-      style="flex:1;max-width:340px;background:#0f172a;border:1px solid #374151;border-radius:6px;padding:6px 12px;color:#e2e8f0;font-size:12px;font-family:monospace;outline:none;"
-      onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#374151'">
-    <span style="color:#64748b;font-size:11px;">Endpoint: <code style="color:#7dd3fc;">/udyam_reg_v2</code></span>
-    <span id="api-conn-status" style="font-size:11px;color:#64748b;">●  Not tested</span>
-    <button onclick="testAPIConnection()" style="background:#1e3a5f;border:1px solid #3b82f6;color:#7dd3fc;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;">Ping</button>
-  </div>
+  <!-- Backend service URL is intentionally not exposed in the UI.
+       It is configured once, below, as the SERVICE_API constant. -->
 
   <div class="layout">
 
@@ -1300,27 +1293,13 @@
     let units = {};
 
     // ─── BACKEND CONFIG ─────────────────────────────────────────────────────
-    function getAPIBase() {
-      const el = document.getElementById('api_base_url');
-      return el ? el.value.trim().replace(/\/$/, '') : 'http://localhost:5000';
-    }
+    // Single source of truth for the backend service. Host + endpoints live
+    // together here — nothing about the backend is shown or editable in the
+    // UI. Change ONLY this one constant if the service ever moves.
+    const SERVICE_API = "https://cnldc8c3-3333.inc1.devtunnels.ms/udyamreg";
 
-    async function testAPIConnection() {
-      const statusEl = document.getElementById('api-conn-status');
-      statusEl.style.color = '#f97316';
-      statusEl.textContent = '● Testing...';
-      try {
-        const res = await fetch(getAPIBase() + '/udyam_reg_v2', {
-          method: 'OPTIONS',
-          signal: AbortSignal.timeout(4000)
-        });
-        statusEl.style.color = '#22c55e';
-        statusEl.textContent = '● Server reachable (HTTP ' + res.status + ')';
-      } catch (e) {
-        statusEl.style.color = '#ef4444';
-        statusEl.textContent = '● Unreachable — ' + e.message;
-      }
-    }
+    let currentSessionId = null;
+    let statusPollTimer = null;
 
     function scrollTo(id) {
       document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1827,7 +1806,7 @@
     // Init
     document.getElementById('toggle-btn').style.display = 'flex';
 
-    // ─── SUBMIT TO API (/udyam_reg_v2) ────────────────────────────────────────
+    // ─── SUBMIT TO API (/start → OTP → /status) ───────────────────────────────
     async function submitToAPI() {
       const payload = buildJSON();
 
@@ -1848,7 +1827,7 @@
 
       // Update button state
       const btn = document.getElementById('submitBtn');
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ Submitting...'; }
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Starting...'; }
 
       const titleEl = document.getElementById('apiResponseTitle');
       const statusEl = document.getElementById('apiStatusBadge');
@@ -1856,55 +1835,179 @@
       const resPanel = document.getElementById('apiResponsePanel');
       resPanel.classList.add('show');
 
-      const apiUrl = getAPIBase() + '/udyam_reg_v2';
-      titleEl.textContent = '⏳ POST ' + apiUrl;
+      titleEl.textContent = '⏳ Starting automation…';
       titleEl.style.color = '#f97316';
       statusEl.innerHTML = '<span style="color:#f97316">Sending…</span>';
       codeEl.textContent = JSON.stringify(payload, null, 2);
 
       try {
-        const res = await fetch(apiUrl, {
+        const res = await fetch(SERVICE_API + '/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
         const httpStatus = res.status;
+        let data = null;
         let responseText = '';
         try {
-          const data = await res.json();
+          data = await res.json();
           responseText = JSON.stringify(data, null, 2);
         } catch {
           responseText = await res.text();
         }
 
-        const isOk = res.ok;
-        titleEl.textContent = isOk ? '✅ API Response — Success' : '⚠️ API Response — Error';
+        const isOk = res.ok && data && data.session_id;
+        titleEl.textContent = isOk ? '✅ Automation Started' : '⚠️ API Response — Error';
         titleEl.style.color = isOk ? '#22c55e' : '#ef4444';
         statusEl.innerHTML = `<span style="color:${isOk ? '#22c55e' : '#ef4444'}">HTTP ${httpStatus}</span>`;
         codeEl.textContent = responseText;
 
-        // Also echo response into output panel
-        const combined = '// ── REQUEST PAYLOAD ──\n' + jsonStr + '\n\n// ── API RESPONSE (HTTP ' + httpStatus + ') ──\n' + responseText;
+        const combined = '// ── REQUEST PAYLOAD ──\n' + jsonStr + '\n\n// ── /start RESPONSE (HTTP ' + httpStatus + ') ──\n' + responseText;
         document.getElementById('json-output').innerHTML = syntaxHighlight(combined);
 
-        showToast(isOk ? '✅ Submitted successfully!' : '⚠️ API returned error — check response', isOk ? 'success' : 'error');
+        if (isOk) {
+          currentSessionId = data.session_id;
+          showToast('✅ Automation started — awaiting OTPs', 'success');
+          openOtpModal();
+          startStatusPolling();
+        } else {
+          showToast('⚠️ Could not start automation — check response', 'error');
+        }
 
       } catch (err) {
         titleEl.textContent = '❌ Network Error';
         titleEl.style.color = '#ef4444';
         statusEl.innerHTML = `<span style="color:#ef4444">Could not reach server</span>`;
-        codeEl.textContent = 'Error: ' + err.message + '\n\nCheck:\n• Flask is running at ' + getAPIBase() + '\n• CORS is enabled on the server\n• The URL in the config bar is correct';
+        codeEl.textContent = 'Error: ' + err.message + '\n\nCheck:\n• The automation service is running\n• CORS is enabled on the server';
         showToast('Network error — server not reachable', 'error');
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = '⚡ Submit to API'; }
       }
     }
 
+    // ─── STATUS POLLING (/status) ──────────────────────────────────────────────
+    function startStatusPolling() {
+      if (statusPollTimer) clearInterval(statusPollTimer);
+      statusPollTimer = setInterval(async () => {
+        if (!currentSessionId) return;
+        try {
+          const res = await fetch(SERVICE_API + '/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: currentSessionId })
+          });
+          const data = await res.json();
+          const codeEl = document.getElementById('apiResponseCode');
+          const titleEl = document.getElementById('apiResponseTitle');
+          if (codeEl) codeEl.textContent = JSON.stringify(data, null, 2);
+          if (titleEl) titleEl.textContent = '🔄 Status — ' + (data.status || 'in progress');
+          if (data.status && /complete|done|success|fail|error/i.test(data.status)) {
+            clearInterval(statusPollTimer);
+            statusPollTimer = null;
+            showToast(/fail|error/i.test(data.status) ? '⚠️ Registration failed — see status panel' : '✅ Registration complete!', /fail|error/i.test(data.status) ? 'error' : 'success');
+          }
+        } catch (e) {
+          // transient poll errors are ignored; polling continues
+        }
+      }, 4000);
+    }
 
     // ══════════════════════════════════════════════════════════════════════
-    //  LIVE LOG MONITOR + OTP HANDLER
+    //  OTP HANDLER (two OTPs — Aadhaar + PAN — submitted to /otp in sequence)
     // ══════════════════════════════════════════════════════════════════════
+    let otpTimerInterval = null;
+
+    function openOtpModal() {
+      const sessionLabel = document.getElementById('otpSessionLabel');
+      if (sessionLabel) sessionLabel.textContent = currentSessionId || '';
+      document.getElementById('otp_input_1').value = '';
+      document.getElementById('otp_input_2').value = '';
+      const errEl = document.getElementById('otpError');
+      errEl.style.display = 'none';
+      errEl.textContent = '';
+      document.getElementById('otpOverlay').classList.add('show');
+      startOtpTimer(120);
+      document.getElementById('otp_input_1').focus();
+    }
+
+    function closeOtpModal() {
+      document.getElementById('otpOverlay').classList.remove('show');
+      if (otpTimerInterval) clearInterval(otpTimerInterval);
+    }
+
+    function startOtpTimer(seconds) {
+      if (otpTimerInterval) clearInterval(otpTimerInterval);
+      let remaining = seconds;
+      const txt = document.getElementById('otpTimerTxt');
+      const render = () => {
+        const m = Math.floor(remaining / 60);
+        const s = String(remaining % 60).padStart(2, '0');
+        txt.textContent = 'Both OTPs expire in ' + m + ':' + s;
+      };
+      render();
+      otpTimerInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(otpTimerInterval);
+          txt.textContent = 'OTPs expired — please resend and try again.';
+          return;
+        }
+        render();
+      }, 1000);
+    }
+
+    async function postOtp(otp) {
+      const res = await fetch(SERVICE_API + '/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: currentSessionId, otp })
+      });
+      let data = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok) {
+        const msg = (data && (data.message || data.error)) || ('HTTP ' + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    async function submitOtp() {
+      const otp1 = document.getElementById('otp_input_1').value.trim();
+      const otp2 = document.getElementById('otp_input_2').value.trim();
+      const errEl = document.getElementById('otpError');
+
+      if (!currentSessionId) {
+        errEl.textContent = 'No active session — please submit the form again.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (!/^\d{4,8}$/.test(otp1) || !/^\d{4,8}$/.test(otp2)) {
+        errEl.textContent = 'Enter both OTPs correctly — numbers only, in both boxes.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const btn = document.getElementById('otpSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Verifying…';
+      errEl.style.display = 'none';
+
+      try {
+        // Aadhaar OTP first, then the PAN verification OTP — both go to the
+        // same /otp endpoint, submitted one after the other for this session.
+        await postOtp(otp1);
+        await postOtp(otp2);
+        showToast('✅ Both OTPs verified!', 'success');
+        closeOtpModal();
+      } catch (err) {
+        errEl.textContent = 'OTP verification failed: ' + err.message;
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify & Continue';
+      }
+    }
   </script>
 
   <!-- API Response Panel -->
@@ -1920,7 +2023,28 @@
     </div>
   </div>
 
-
+  <!-- OTP MODAL — two OTPs required per session: Aadhaar OTP + PAN verification OTP -->
+  <div class="otp-overlay" id="otpOverlay">
+    <div class="otp-modal">
+      <div class="otp-pulse-ring">🔐</div>
+      <h2>OTP Verification</h2>
+      <p>Two OTPs are required to continue for session <span id="otpSessionLabel" style="color:#7dd3fc;"></span> —
+        one sent to your Aadhaar-linked mobile, one sent for PAN verification.</p>
+      <div class="otp-fields">
+        <div class="otp-field">
+          <label for="otp_input_1">Aadhaar OTP</label>
+          <input type="text" id="otp_input_1" maxlength="8" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••">
+        </div>
+        <div class="otp-field">
+          <label for="otp_input_2">PAN Verification OTP</label>
+          <input type="text" id="otp_input_2" maxlength="8" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••">
+        </div>
+      </div>
+      <div class="otp-err" id="otpError"></div>
+      <button class="otp-submit-btn" id="otpSubmitBtn" onclick="submitOtp()">Verify &amp; Continue</button>
+      <div class="otp-timer-txt" id="otpTimerTxt"></div>
+    </div>
+  </div>
 
 
   <!-- ══════════ REFERENCE DATA PANEL ══════════ -->
