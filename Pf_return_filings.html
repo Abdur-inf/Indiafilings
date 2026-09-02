@@ -116,11 +116,11 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title text-danger">Unable to Start</h5>
+        <h5 class="modal-title text-danger" id="error-modal-title">Unable to Start</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <pre id="error-modal-message" class="mb-0" style="white-space: pre-wrap; font-family: inherit;"></pre>
+        <div id="error-modal-message"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -260,23 +260,47 @@ function collectMembers() {
 // ---------------------------------------------------------------------
 // Error popup helper (used for 422 responses from /start)
 // ---------------------------------------------------------------------
-function showErrorPopup(msg) {
+function showErrorPopup(body) {
   const modalEl = document.getElementById("errorModal");
-  document.getElementById("error-modal-message").textContent = msg;
+  document.getElementById("error-modal-title").textContent =
+    (body && typeof body.error === "string" && body.error.trim()) ? body.error : "Unable to Start";
+
+  let listHtml = "";
+  if (body && Array.isArray(body.details) && body.details.length) {
+    listHtml = "<ul class=\"mb-0 ps-3\">" +
+      body.details.map(d => `<li>${escapeHtml(d)}</li>`).join("") +
+      "</ul>";
+  } else {
+    listHtml = `<pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(extractErrorMessage(body))}</pre>`;
+  }
+  document.getElementById("error-modal-message").innerHTML = listHtml;
+
   if (window.bootstrap && bootstrap.Modal) {
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
   } else {
     // Fallback if Bootstrap JS isn't available for some reason
-    alert(msg);
+    alert(extractErrorMessage(body));
   }
 }
 
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
 // Pull a human-readable message out of a 422 response body, whatever
-// shape it comes in (message / detail / error / FastAPI-style array
-// of validation errors), falling back to the raw JSON if unknown.
+// shape it comes in (message / error+details / detail / FastAPI-style
+// array of validation errors), falling back to the raw JSON if unknown.
 function extractErrorMessage(body) {
   if (!body) return "Failed to start.";
+
+  // Shape seen from /start: { "error": "...", "details": ["...", "..."] }
+  if (Array.isArray(body.details) && body.details.length) {
+    const lines = body.details.map(d => "• " + d).join("\n");
+    return body.error ? `${body.error}\n\n${lines}` : lines;
+  }
 
   if (typeof body.message === "string" && body.message.trim()) return body.message;
   if (typeof body.error === "string" && body.error.trim()) return body.error;
@@ -349,12 +373,11 @@ document.getElementById("start-btn").addEventListener("click", async () => {
     });
     const body = await res.json();
     if (!res.ok) {
-      const msg = extractErrorMessage(body);
       if (res.status === 422) {
         // Validation error from the server -- surface it in a popup.
-        showErrorPopup(msg);
+        showErrorPopup(body);
       } else {
-        errEl.textContent = msg;
+        errEl.textContent = extractErrorMessage(body);
       }
       return;
     }
