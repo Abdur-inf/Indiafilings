@@ -120,7 +120,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p id="error-modal-message" class="mb-0"></p>
+        <pre id="error-modal-message" class="mb-0" style="white-space: pre-wrap; font-family: inherit;"></pre>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -272,6 +272,42 @@ function showErrorPopup(msg) {
   }
 }
 
+// Pull a human-readable message out of a 422 response body, whatever
+// shape it comes in (message / detail / error / FastAPI-style array
+// of validation errors), falling back to the raw JSON if unknown.
+function extractErrorMessage(body) {
+  if (!body) return "Failed to start.";
+
+  if (typeof body.message === "string" && body.message.trim()) return body.message;
+  if (typeof body.error === "string" && body.error.trim()) return body.error;
+
+  if (typeof body.detail === "string" && body.detail.trim()) return body.detail;
+
+  // FastAPI/pydantic-style: detail is an array of {loc, msg, type}
+  if (Array.isArray(body.detail)) {
+    return body.detail
+      .map(d => {
+        if (typeof d === "string") return d;
+        const loc = Array.isArray(d.loc) ? d.loc.filter(l => l !== "body").join(".") : "";
+        return loc ? `${loc}: ${d.msg}` : d.msg;
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  // Generic array of error strings/objects
+  if (Array.isArray(body)) {
+    return body.map(d => (typeof d === "string" ? d : (d.msg || JSON.stringify(d)))).join("\n");
+  }
+
+  // Nothing recognizable -- show the raw payload so nothing is hidden
+  try {
+    return JSON.stringify(body, null, 2);
+  } catch {
+    return "Failed to start.";
+  }
+}
+
 // ---------------------------------------------------------------------
 // Start + status polling
 // ---------------------------------------------------------------------
@@ -313,7 +349,7 @@ document.getElementById("start-btn").addEventListener("click", async () => {
     });
     const body = await res.json();
     if (!res.ok) {
-      const msg = body.message || "Failed to start.";
+      const msg = extractErrorMessage(body);
       if (res.status === 422) {
         // Validation error from the server -- surface it in a popup.
         showErrorPopup(msg);
