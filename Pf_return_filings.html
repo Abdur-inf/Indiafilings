@@ -1,383 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>PF Return Filings</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PF Onboarding</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0f1117;
-  --surface:#181c27;
-  --surface2:#1e2435;
-  --border:#2a3045;
-  --border2:#3a4560;
-  --accent:#3b82f6;
-  --accent2:#60a5fa;
-  --green:#22c55e;
-  --red:#ef4444;
-  --yellow:#f59e0b;
-  --text:#e8ecf4;
-  --text2:#8b93a8;
-  --text3:#555f7a;
-  --mono:'IBM Plex Mono',monospace;
-  --sans:'IBM Plex Sans',sans-serif;
-  --radius:8px;
-}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1rem}
-.wrap{max-width:780px;margin:0 auto}
-
-/* header */
-.header{margin-bottom:2rem}
-.header h1{font-size:22px;font-weight:600;letter-spacing:-0.3px;margin-bottom:4px}
-.header p{font-size:13px;color:var(--text2);font-family:var(--mono)}
-.tag{display:inline-block;background:#1a2540;border:1px solid #2a3a60;color:var(--accent2);font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:4px;margin-bottom:10px}
-
-/* card */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem}
-.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
-.card-title svg{width:14px;height:14px;color:var(--accent)}
-
-/* form */
-.row{display:grid;gap:10px;margin-bottom:10px}
-.row-2{grid-template-columns:1fr 1fr}
-.row-3{grid-template-columns:1fr 1fr 1fr}
-.row-1{grid-template-columns:1fr}
-label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px}
-input,select{
-  width:100%;padding:9px 12px;font-size:13px;font-family:var(--sans);
-  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
-  color:var(--text);transition:border .15s,box-shadow .15s;
-  appearance:none;-webkit-appearance:none;
-}
-input::placeholder{color:var(--text3)}
-input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%238b93a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-select option{background:var(--surface2)}
-
-/* member block */
-.member-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:10px;position:relative}
-.member-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.member-num{font-size:12px;font-weight:600;color:var(--accent2);font-family:var(--mono);background:#1a2a4a;border:1px solid #2a4070;padding:2px 10px;border-radius:20px}
-.btn-remove{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .15s}
-.btn-remove:hover{background:#2a1520;color:var(--red);border-color:#5a2030}
-
-/* month block */
-.month-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:10px;position:relative}
-.month-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.month-num{font-size:12px;font-weight:600;color:var(--yellow);font-family:var(--mono);background:#2a2010;border:1px solid #5a4020;padding:2px 10px;border-radius:20px}
-
-/* file drop */
-.file-drop{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);position:relative}
-.file-drop:hover,.file-drop.drag{border-color:var(--accent);background:#1a2540}
-.file-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.file-drop-text{font-size:12px;color:var(--text2);pointer-events:none}
-.file-drop-text strong{color:var(--accent2);display:block;font-size:13px;margin-bottom:3px}
-.file-name{font-size:12px;color:var(--green);font-family:var(--mono);margin-top:4px;word-break:break-all}
-.file-size{font-size:11px;color:var(--text3)}
-
-/* buttons */
-.btn-add{background:none;border:1.5px dashed var(--border2);border-radius:var(--radius);padding:10px;width:100%;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .15s;margin-top:2px}
-.btn-add:hover{background:#1a2540;color:var(--accent2);border-color:var(--accent)}
-.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1rem}
-.btn-submit{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-submit:hover{background:#2563eb}
-.btn-submit:active{transform:scale(0.98)}
-.btn-submit:disabled{background:#334;color:var(--text3);cursor:not-allowed}
-.btn-copy{background:var(--surface);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius);padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-copy:hover{background:var(--surface2);color:var(--text);border-color:var(--accent)}
-.btn-copy.copied{background:#0f2a1f;color:var(--green);border-color:var(--green)}
-
-/* response */
-#response-box{background:#0a0d14;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-all;color:#a8d4ff;max-height:320px;overflow-y:auto;display:none;margin-top:1rem;line-height:1.6}
-.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;font-family:var(--mono);font-weight:600;margin-left:8px}
-.badge-ok{background:#0f2a1f;color:var(--green);border:1px solid #1a5030}
-.badge-err{background:#2a0f0f;color:var(--red);border:1px solid #501a1a}
-.badge-load{background:#1a2540;color:var(--accent2);border:1px solid #2a4070}
-
-/* api url */
-.api-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem}
-
-/* divider */
-.divider{height:1px;background:var(--border);margin:1rem 0}
-
-/* scroll */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-
-@media(max-width:520px){.row-2,.row-3{grid-template-columns:1fr}.btn-row{grid-template-columns:1fr}}
+  body { background: #f5f7fa; }
+  .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  table.member-table { font-size: 0.85rem; }
+  table.member-table td[contenteditable="true"] {
+    min-width: 90px; padding: 4px 6px; border: 1px solid #dee2e6;
+  }
+  table.member-table td[contenteditable="true"]:focus {
+    outline: 2px solid #3654AE; outline-offset: -2px; background: #fffbe6;
+  }
+  table.member-table td.required-empty { background: #ffe6e6; }
+  #log-box {
+    height: 260px; overflow-y: auto; background: #0d1117; color: #c9d1d9;
+    font-family: monospace; font-size: 0.85rem; padding: 10px; border-radius: 6px;
+  }
+  #log-box .line { white-space: pre-wrap; }
+  #log-box .line.err { color: #ff7b72; }
+  #log-box .line.ok { color: #7ee787; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="container py-4">
+  <h3 class="mb-4">PF Onboarding <small class="text-muted fs-6">/{{ service_name }}</small></h3>
 
-  <div class="header">
-    <div class="tag">POST /pf_new_onboarding</div>
-    <h1>PF Return Filings</h1>
-    <p>Configure endpoint, members, and monthly return below</p>
-  </div>
-
-  <!-- Credentials -->
-  <div class="card">
-    <div class="card-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      Credentials
-    </div>
-    <div class="row row-2">
-      <div><label>Username</label><input id="username" type="text" placeholder="e.g. PYPNY3764038000"/></div>
-      <div><label>Password</label><input id="password" type="text" value="India@123"/></div>
-    </div>
-  </div>
-
-  <!-- Members -->
-  <div class="card">
-    <div class="card-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M19 8v6M16 11h6"/></svg>
-      Members <span id="member-count" style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:6px"></span>
-    </div>
-    <div id="members-container"></div>
-    <button class="btn-add" onclick="addMember()">+ Add Member</button>
-  </div>
-
-  <!-- Month / Return -->
-  <div class="card">
-    <div class="card-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      Monthly Return <span id="month-count" style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:6px"></span>
-    </div>
-    <div id="months-container"></div>
-    <button class="btn-add" onclick="addMonth()">+ Add Month</button>
-  </div>
-
-  <!-- API URL -->
-  <div class="api-card">
-    <div class="row row-1">
-      <div><label>API URL</label><input id="api-url" type="text" value="http://127.0.0.1:5000/pf_new_onboarding" placeholder="http://..."/></div>
+  <!-- Step 1: credentials -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">1. Portal Credentials</h5>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Username</label>
+          <input id="user_name" type="text" class="form-control" placeholder="Portal login ID">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Password</label>
+          <input id="password" type="password" class="form-control" placeholder="Portal password">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Company Name</label>
+          <input id="company_name" type="text" class="form-control" placeholder="For your own reference">
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Actions -->
-  <div class="btn-row">
-    <button class="btn-copy" id="copy-btn" onclick="copyPayload()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-      Copy Payload
-    </button>
-    <button class="btn-submit" id="submit-btn" onclick="submitForm()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
-      Submit
-    </button>
+  <!-- Step 2: upload -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">2. Upload Members (CSV or Excel)</h5>
+      <p class="text-muted small mb-2">
+        Columns must be in this exact order (a header row is optional and will be
+        detected/skipped automatically if the first cell reads "uan"):
+      </p>
+      <table class="table table-sm table-bordered w-auto small mb-3">
+        <thead class="table-light"><tr>
+          <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th>
+          <th>G</th><th>H</th><th>I</th><th>J</th><th>K</th>
+        </tr></thead>
+        <tbody><tr>
+          <td>uan</td><td>name</td><td>aadhar</td><td>dob</td><td>doj</td><td>wages</td>
+          <td>gender</td><td>marital_status</td><td>qualification</td><td>pan</td><td>email</td>
+        </tr></tbody>
+      </table>
+      <input id="file-input" type="file" accept=".csv,.xlsx,.xls" class="form-control mb-2">
+      <button id="add-row-btn" class="btn btn-sm btn-outline-secondary">+ Add Row</button>
+      <span id="upload-error" class="text-danger small ms-2"></span>
+    </div>
   </div>
 
-  <div id="response-box"></div>
+  <!-- Step 3: editable table -->
+  <div class="card mb-4" id="table-card" style="display:none;">
+    <div class="card-body">
+      <h5 class="card-title">3. Review &amp; Edit Members</h5>
+      <p class="text-muted small">Click any cell to edit it before starting. Cells shaded red are missing a required value.</p>
+      <div class="table-responsive">
+        <table class="table table-sm member-table" id="member-table">
+          <thead class="table-light">
+            <tr>
+              <th>UAN *</th><th>Name *</th><th>Aadhar *</th><th>DOB *</th><th>DOJ *</th>
+              <th>Wages *</th><th>Gender *</th><th>Marital Status</th><th>Qualification</th>
+              <th>PAN</th><th>Email</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="member-table-body"></tbody>
+        </table>
+      </div>
+      <button id="start-btn" class="btn btn-primary">Start Onboarding</button>
+      <span id="start-error" class="text-danger small ms-2"></span>
+    </div>
+  </div>
+
+  <!-- Step 4: status -->
+  <div class="card" id="status-card" style="display:none;">
+    <div class="card-body">
+      <h5 class="card-title">4. Progress</h5>
+      <div class="mb-1 small text-muted">Session: <code id="session-id-display"></code></div>
+      <div class="progress mb-3" style="height: 20px;">
+        <div id="progress-bar" class="progress-bar" role="progressbar" style="width:0%">0%</div>
+      </div>
+      <div id="log-box"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-const QUAL_OPTIONS=[
-  {v:"",l:"— Select Qualification —"},
-  {v:"1",l:"1 — Illiterate"},
-  {v:"3",l:"3 — Non-matric"},
-  {v:"4",l:"4 — Matric"},
-  {v:"5",l:"5 — Senior Secondary"},
-  {v:"6",l:"6 — Graduate"},
-  {v:"7",l:"7 — Post-graduate"},
-  {v:"8",l:"8 — Doctorate"},
-  {v:"9",l:"9 — Technical (professional)"},
-];
+const SERVICE_NAME = "https://cnldc8c3-5000.inc1.devtunnels.ms/PF_onboarding";
+const REQUIRED_FIELDS = ["uan", "name", "aadhar", "dob", "doj", "wages", "gender"];
+const FIELD_ORDER = ["uan", "name", "aadhar", "dob", "doj", "wages", "gender",
+                      "marital_status", "qualification", "pan", "email"];
 
-const RETURN_TYPE_OPTIONS=[
-  {v:"",l:"— Select Return Type —"},
-  {v:"2",l:"2 — Supplementary Return"},
-  {v:"3",l:"3 — Revised Return"},
-];
+let pollTimer = null;
 
-const MARITAL_OPTIONS=[
-  {v:"",l:"— Select Marital Status —"},
-  {v:"M",l:"M — Married"},
-  {v:"U",l:"U — Un-Married"},
-  {v:"W",l:"W — Widow/Widower"},
-  {v:"D",l:"D — Divorcee"},
-];
+// ---------------------------------------------------------------------
+// CSV / Excel upload -> array of member objects, positional column
+// mapping per FIELD_ORDER (A=uan, B=name, ... K=email), regardless of
+// whatever header text (if any) is in the file.
+// ---------------------------------------------------------------------
+document.getElementById("file-input").addEventListener("change", function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById("upload-error").textContent = "";
 
-const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const ext = file.name.split(".").pop().toLowerCase();
 
-function currentMonthLabel(){
-  const d=new Date();
-  return MONTH_NAMES[d.getMonth()]+" "+d.getFullYear();
-}
-
-let members=[{uan_no:"",aadhar_no:"",aadhar_name:"",dob:"30/05/1996",qualification:"6",doj:"01/04/2026",wages:"15000",pan_number:"",pan_name:"",marital_status:""}];
-let months=[{Month:currentMonthLabel(),Return_type:"",Return_file:"",_fileName:"",_fileSize:""}];
-
-/* ── helpers ── */
-function sel(options,val,onchange){
-  return `<select onchange="${onchange}">${options.map(o=>`<option value="${o.v}"${o.v===val?" selected":""}>${o.l}</option>`).join("")}</select>`;
-}
-function inp(val,ph,oninput,type="text"){
-  return `<input type="${type}" placeholder="${ph}" value="${val?val:""}" oninput="${oninput}"/>`;
-}
-function fld(label,ctrl){
-  return `<div><label>${label}</label>${ctrl}</div>`;
-}
-
-/* ── members ── */
-function renderMembers(){
-  document.getElementById("members-container").innerHTML=members.map((m,i)=>`
-    <div class="member-block">
-      <div class="member-header">
-        <span class="member-num">Member ${i+1}</span>
-        ${members.length>1?`<button class="btn-remove" onclick="removeMember(${i})">✕ Remove</button>`:""}
-      </div>
-      <div class="row row-2">
-        ${fld("UAN No",inp(m.uan_no,"123456789012",`updateM(${i},'uan_no',this.value)`))}
-        ${fld("Aadhar No",inp(m.aadhar_no,"123412341234",`updateM(${i},'aadhar_no',this.value)`))}
-      </div>
-      <div class="row row-2">
-        ${fld("Aadhar Name",inp(m.aadhar_name,"Name on Aadhar",`updateM(${i},'aadhar_name',this.value)`))}
-        ${fld("Date of Birth",inp(m.dob,"DD/MM/YYYY",`updateM(${i},'dob',this.value)`))}
-      </div>
-      <div class="row row-2">
-        ${fld("Date of Joining",inp(m.doj,"DD/MM/YYYY",`updateM(${i},'doj',this.value)`))}
-        ${fld("Wages",inp(m.wages,"Monthly wages",`updateM(${i},'wages',this.value)`))}
-      </div>
-      <div class="row row-2">
-        ${fld("Qualification",sel(QUAL_OPTIONS,m.qualification,`updateM(${i},'qualification',this.value)`))}
-        ${fld("PAN Number",inp(m.pan_number,"ABCDE1234F",`updateM(${i},'pan_number',this.value)`))}
-      </div>
-      <div class="row row-1">
-        ${fld("PAN Name",inp(m.pan_name,"Name on PAN",`updateM(${i},'pan_name',this.value)`))}
-      </div>
-      <div class="row row-1">
-        ${fld("Marital Status",sel(MARITAL_OPTIONS,m.marital_status,`updateM(${i},'marital_status',this.value)`))}
-      </div>
-    </div>
-  `).join("");
-  document.getElementById("member-count").textContent=`(${members.length})`;
-}
-function updateM(i,k,v){members[i][k]=v}
-function addMember(){members.push({uan_no:"",aadhar_no:"",aadhar_name:"",dob:"",qualification:"",doj:"",wages:"",pan_number:"",pan_name:"",marital_status:""});renderMembers()}
-function removeMember(i){members.splice(i,1);renderMembers()}
-
-/* ── months ── */
-function renderMonths(){
-  document.getElementById("months-container").innerHTML=months.map((mo,i)=>`
-    <div class="month-block">
-      <div class="month-header">
-        <span class="month-num">Month ${i+1}</span>
-        ${months.length>1?`<button class="btn-remove" onclick="removeMonth(${i})">✕ Remove</button>`:""}
-      </div>
-      <div class="row row-2">
-        ${fld("Month (e.g. May 2026)",monthInp(mo.Month,i))}
-        ${fld("Return Type",sel(RETURN_TYPE_OPTIONS,mo.Return_type,`updateMo(${i},'Return_type',this.value)`))}
-      </div>
-      <div class="row row-1">
-        ${fld("Return File (PDF / any file → base64)",fileField(i,mo._fileName,mo._fileSize))}
-      </div>
-    </div>
-  `).join("");
-  // attach file listeners
-  months.forEach((_,i)=>{
-    const fi=document.getElementById(`file-input-${i}`);
-    const drop=document.getElementById(`file-drop-${i}`);
-    if(fi){
-      fi.addEventListener("change",e=>handleFile(e.target.files[0],i));
-      drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag")});
-      drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));
-      drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("drag");handleFile(e.dataTransfer.files[0],i)});
-    }
-  });
-  document.getElementById("month-count").textContent=`(${months.length})`;
-}
-
-function monthInp(val,i){
-  return `<input type="text" placeholder="May 2026" value="${val?val:""}" oninput="updateMo(${i},'Month',this.value)"/>`;
-}
-
-function fileField(i,fname,fsize){
-  const hasFile=!!fname;
-  return `<div class="file-drop" id="file-drop-${i}">
-    <input type="file" id="file-input-${i}" accept="*/*"/>
-    <div class="file-drop-text">
-      ${hasFile
-        ? `<strong style="color:var(--green)">✓ ${fname}</strong><span class="file-size">${fsize}</span>`
-        : `<strong>Click or drag & drop</strong>Will be encoded to base64`
+  if (ext === "csv") {
+    Papa.parse(file, {
+      complete: (results) => loadRows(results.data),
+      error: (err) => showUploadError("CSV parse error: " + err.message),
+    });
+  } else if (ext === "xlsx" || ext === "xls") {
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        loadRows(rows);
+      } catch (err) {
+        showUploadError("Excel parse error: " + err.message);
       }
-    </div>
-  </div>`;
-}
-
-function handleFile(file,i){
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const b64=e.target.result.split(",")[1];
-    months[i].Return_file=b64;
-    months[i]._fileName=file.name;
-    months[i]._fileSize=formatSize(file.size);
-    renderMonths();
-  };
-  reader.readAsDataURL(file);
-}
-function formatSize(b){if(b<1024)return b+"B";if(b<1048576)return (b/1024).toFixed(1)+"KB";return (b/1048576).toFixed(2)+"MB"}
-function updateMo(i,k,v){months[i][k]=v}
-function addMonth(){months.push({Month:"",Return_type:"",Return_file:"",_fileName:"",_fileSize:""});renderMonths()}
-function removeMonth(i){months.splice(i,1);renderMonths()}
-
-/* ── payload builder ── */
-function buildPayload(){
-  return {
-    username:document.getElementById("username").value,
-    password:document.getElementById("password").value,
-    members:members.map(({_fileName,_fileSize,...m})=>m),
-    month:months.map(mo=>({
-      Month:mo.Month,
-      Return_type:mo.Return_type,
-      Return_file:mo.Return_file
-    }))
-  };
-}
-
-/* ── copy payload ── */
-async function copyPayload(){
-  const btn=document.getElementById("copy-btn");
-  const payload=buildPayload();
-  try{
-    await navigator.clipboard.writeText(JSON.stringify(payload,null,2));
-    btn.classList.add("copied");
-    btn.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
-    setTimeout(()=>{btn.classList.remove("copied");btn.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Payload`},2000);
-  }catch{
-    alert("Copy failed. Please copy manually from the response box.");
+    };
+    reader.onerror = () => showUploadError("Could not read the file.");
+    reader.readAsArrayBuffer(file);
+  } else {
+    showUploadError("Unsupported file type. Upload a .csv, .xlsx, or .xls file.");
   }
+});
+
+function showUploadError(msg) {
+  document.getElementById("upload-error").textContent = msg;
 }
 
-/* ── submit ── */
-async function submitForm(){
-  const url=document.getElementById("api-url").value.trim();
-  const btn=document.getElementById("submit-btn");
-  const box=document.getElementById("response-box");
-  if(!url){alert("Please enter an API URL");return}
-  const payload=buildPayload();
-  btn.disabled=true;
-  btn.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Submitting…`;
-  box.style.display="block";
-  box.textContent="Sending request…\n\nPayload:\n"+JSON.stringify(payload,null,2);
-  try{
-    const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    let data;try{data=await res.json()}catch{data=await res.text()}
-    const badge=res.ok?`<span class="status-badge badge-ok">✓ ${res.status}</span>`:`<span class="status-badge badge-err">✗ ${res.status}</span>`;
-    btn.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg> Submit ${badge}`;
-    box.textContent="Status: "+res.status+" "+res.statusText+"\n\nResponse:\n"+(typeof data==="string"?data:JSON.stringify(data,null,2));
-  }catch(e){
-    btn.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg> Submit <span class="status-badge badge-err">✗ Error</span>`;
-    box.textContent="Request failed:\n"+e.message+"\n\nNote: Localhost requests are blocked by CORS when run from an iframe. Run from your local environment or use a CORS proxy.";
+function loadRows(rows) {
+  rows = rows.filter(r => r && r.length && r.some(c => String(c).trim() !== ""));
+  if (!rows.length) {
+    showUploadError("No data rows found in the file.");
+    return;
   }
-  btn.disabled=false;
+
+  // Auto-detect + skip a header row: only if column A's first cell
+  // literally reads "uan" (case-insensitive) -- otherwise every row
+  // is treated as data, per the fixed A-K column mapping.
+  let dataRows = rows;
+  if (String(rows[0][0]).trim().toLowerCase() === "uan") {
+    dataRows = rows.slice(1);
+  }
+
+  const members = dataRows.map(row => {
+    const m = {};
+    FIELD_ORDER.forEach((field, i) => { m[field] = (row[i] !== undefined ? String(row[i]).trim() : ""); });
+    return m;
+  });
+
+  renderTable(members);
 }
 
-renderMembers();
-renderMonths();
+// ---------------------------------------------------------------------
+// Editable table rendering
+// ---------------------------------------------------------------------
+function renderTable(members) {
+  const tbody = document.getElementById("member-table-body");
+  tbody.innerHTML = "";
+  members.forEach(m => tbody.appendChild(buildRow(m)));
+  document.getElementById("table-card").style.display = "";
+  document.getElementById("table-card").scrollIntoView({ behavior: "smooth" });
+}
+
+function buildRow(member) {
+  const tr = document.createElement("tr");
+  FIELD_ORDER.forEach(field => {
+    const td = document.createElement("td");
+    td.contentEditable = "true";
+    td.dataset.field = field;
+    td.textContent = member[field] || "";
+    if (REQUIRED_FIELDS.includes(field) && !td.textContent) {
+      td.classList.add("required-empty");
+    }
+    td.addEventListener("input", () => {
+      td.classList.toggle("required-empty",
+        REQUIRED_FIELDS.includes(field) && !td.textContent.trim());
+    });
+    tr.appendChild(td);
+  });
+  const tdDel = document.createElement("td");
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "✕";
+  delBtn.className = "btn btn-sm btn-outline-danger";
+  delBtn.onclick = () => tr.remove();
+  tdDel.appendChild(delBtn);
+  tr.appendChild(tdDel);
+  return tr;
+}
+
+document.getElementById("add-row-btn").addEventListener("click", () => {
+  const blank = {}; FIELD_ORDER.forEach(f => blank[f] = "");
+  document.getElementById("member-table-body").appendChild(buildRow(blank));
+  document.getElementById("table-card").style.display = "";
+});
+
+function collectMembers() {
+  const rows = document.querySelectorAll("#member-table-body tr");
+  const members = [];
+  rows.forEach(row => {
+    const cells = row.querySelectorAll("td[contenteditable]");
+    const m = {};
+    cells.forEach(td => { m[td.dataset.field] = td.textContent.trim(); });
+    members.push(m);
+  });
+  return members;
+}
+
+// ---------------------------------------------------------------------
+// Start + status polling
+// ---------------------------------------------------------------------
+document.getElementById("start-btn").addEventListener("click", async () => {
+  const errEl = document.getElementById("start-error");
+  errEl.textContent = "";
+
+  const user_name = document.getElementById("user_name").value.trim();
+  const password = document.getElementById("password").value;
+  const company_name = document.getElementById("company_name").value.trim();
+
+  if (!user_name || !password || !company_name) {
+    errEl.textContent = "Username, password, and company name are all required.";
+    return;
+  }
+
+  const members = collectMembers();
+  if (!members.length) {
+    errEl.textContent = "Add at least one member before starting.";
+    return;
+  }
+
+  const missing = [];
+  members.forEach((m, i) => {
+    REQUIRED_FIELDS.forEach(f => { if (!m[f]) missing.push(`row ${i + 1}: ${f}`); });
+  });
+  if (missing.length) {
+    errEl.textContent = "Missing required field(s) -- " + missing.join(", ");
+    return;
+  }
+
+  const payload = { user_name, password, company_name, member: members };
+
+  try {
+    const res = await fetch(`${SERVICE_NAME}/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      errEl.textContent = body.message || "Failed to start.";
+      return;
+    }
+    beginPolling(body.sessionid);
+  } catch (err) {
+    errEl.textContent = "Network error: " + err.message;
+  }
+});
+
+function beginPolling(sessionId) {
+  document.getElementById("status-card").style.display = "";
+  document.getElementById("session-id-display").textContent = sessionId;
+  document.getElementById("status-card").scrollIntoView({ behavior: "smooth" });
+
+  const seenLogCount = { n: 0 };
+
+  async function poll() {
+    try {
+      const res = await fetch(`${SERVICE_NAME}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const body = await res.json();
+      if (!res.ok) return;
+
+      const bar = document.getElementById("progress-bar");
+      const pct = Math.round(body.progress || 0);
+      bar.style.width = pct + "%";
+      bar.textContent = pct + "%";
+
+      const logBox = document.getElementById("log-box");
+      const logs = body.log || [];
+      for (let i = seenLogCount.n; i < logs.length; i++) {
+        const line = document.createElement("div");
+        line.className = "line" +
+          (/mismatch|error|failed/i.test(logs[i]) ? " err" :
+           /added|completed/i.test(logs[i]) ? " ok" : "");
+        line.textContent = logs[i];
+        logBox.appendChild(line);
+      }
+      seenLogCount.n = logs.length;
+      logBox.scrollTop = logBox.scrollHeight;
+
+      if (body.finished) {
+        clearInterval(pollTimer);
+        bar.classList.add(body.error ? "bg-danger" : "bg-success");
+      }
+    } catch (err) {
+      // transient network error while polling -- keep trying
+    }
+  }
+
+  poll();
+  pollTimer = setInterval(poll, 2000);
+}
 </script>
 </body>
 </html>
