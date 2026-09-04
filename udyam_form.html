@@ -700,9 +700,9 @@
 
 
     /* ══════════════════════════════════════════════
-     OTP MODAL
+     RESULT OVERLAY — LEFT: status card / RIGHT: OTP card
   ══════════════════════════════════════════════ */
-    .otp-overlay {
+    .result-overlay {
       display: none;
       position: fixed;
       inset: 0;
@@ -711,9 +711,10 @@
       backdrop-filter: blur(8px);
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
 
-    .otp-overlay.show {
+    .result-overlay.show {
       display: flex;
       animation: otpIn .3s ease;
     }
@@ -730,14 +731,127 @@
       }
     }
 
-    .otp-modal {
+    .result-cards {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      width: 100%;
+      max-width: 920px;
+      max-height: 88vh;
+    }
+
+    .status-card {
+      background: #0d1321;
+      border: 2px solid #1a56db;
+      border-radius: 20px;
+      padding: 26px 28px;
+      flex: 1.3;
+      min-width: 0;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 80px rgba(26, 86, 219, 0.25);
+    }
+
+    .status-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .status-card-head h3 {
+      font-size: 16px;
+      color: #e2e8f0;
+      font-weight: 700;
+    }
+
+    .close-result-overlay {
+      background: none;
+      border: none;
+      color: #6b7a99;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .close-result-overlay:hover {
+      color: #f97316;
+    }
+
+    .status-pill {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin: 8px 0 14px;
+      background: rgba(249, 115, 22, 0.15);
+      color: #f97316;
+    }
+
+    .status-json-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #6b7a99;
+      margin-bottom: 8px;
+    }
+
+    .status-card .api-response-code {
+      max-height: none;
+    }
+
+    .reopen-status-btn {
+      position: fixed;
+      right: 28px;
+      bottom: 90px;
+      background: #1a56db;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 98;
+      box-shadow: 0 4px 16px rgba(26, 86, 219, 0.35);
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reopen-status-btn.visible {
+      display: flex;
+    }
+
+    .otp-card {
       background: #111827;
       border: 2px solid #f97316;
       border-radius: 20px;
-      padding: 40px 36px;
+      padding: 32px 28px;
       width: 100%;
-      max-width: 440px;
+      max-width: 360px;
+      flex-shrink: 0;
       box-shadow: 0 24px 80px rgba(249, 115, 22, 0.3);
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+
+    .otp-send-time {
+      font-size: 11px;
+      color: #6b7a99;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    .otp-send-time.sent {
+      color: #22c55e;
+    }
+
+    .otp-send-time.sending {
+      color: #f97316;
     }
 
     .otp-pulse-ring {
@@ -766,7 +880,7 @@
       }
     }
 
-    .otp-modal h2 {
+    .otp-card h2 {
       font-size: 20px;
       font-weight: 700;
       color: #f97316;
@@ -774,7 +888,7 @@
       margin-bottom: 6px;
     }
 
-    .otp-modal p {
+    .otp-card p {
       font-size: 13px;
       color: #6b7a99;
       text-align: center;
@@ -1296,7 +1410,7 @@
     // Single source of truth for the backend service. Host + endpoints live
     // together here — nothing about the backend is shown or editable in the
     // UI. Change ONLY this one constant if the service ever moves.
-    const SERVICE_API = "https://cnldc8c3-3333.inc1.devtunnels.ms/udyamreg";
+    const SERVICE_API = "https://f7ks8r5m-3333.inc1.devtunnels.ms/udyamreg";
 
     let currentSessionId = null;
     let statusPollTimer = null;
@@ -1806,8 +1920,51 @@
     // Init
     document.getElementById('toggle-btn').style.display = 'flex';
 
+    // ─── RESULT OVERLAY (status card + OTP card) ───────────────────────────────
+    // The Submit button stays disabled for the whole lifecycle of a submission —
+    // /start → OTP verification → every /status poll — so a second click can't
+    // fire a duplicate session. It is only re-enabled once the flow reaches a
+    // terminal state (success/failure) or /start itself fails outright.
+    let submissionInFlight = false;
+
+    function setSubmitButtonState(disabled, label) {
+      const btn = document.getElementById('submitBtn');
+      if (!btn) return;
+      btn.disabled = disabled;
+      btn.textContent = label;
+    }
+
+    function openResultOverlay() {
+      document.getElementById('resultOverlay').classList.add('show');
+      document.getElementById('reopenStatusBtn').classList.remove('visible');
+    }
+
+    function closeResultOverlay() {
+      document.getElementById('resultOverlay').classList.remove('show');
+      // Only offer the reopen shortcut while a submission is still active —
+      // once it's finished there is nothing left to watch.
+      if (submissionInFlight) {
+        document.getElementById('reopenStatusBtn').classList.add('visible');
+      }
+    }
+
+    function setStatusCard(title, pillText, pillColor, jsonText) {
+      const titleEl = document.getElementById('apiResponseTitle');
+      const pillEl = document.getElementById('apiStatusBadge');
+      const codeEl = document.getElementById('apiResponseCode');
+      if (titleEl) titleEl.textContent = title;
+      if (pillEl) {
+        pillEl.textContent = pillText;
+        pillEl.style.color = pillColor;
+        pillEl.style.background = pillColor + '26'; // ~15% alpha tint
+      }
+      if (codeEl && jsonText !== undefined) codeEl.textContent = jsonText;
+    }
+
     // ─── SUBMIT TO API (/start → OTP → /status) ───────────────────────────────
     async function submitToAPI() {
+      if (submissionInFlight) return; // guard against double-clicks / re-entry
+
       const payload = buildJSON();
 
       // Validate required fields
@@ -1818,27 +1975,20 @@
         return;
       }
 
-      // Show payload immediately in output panel
+      // Show payload immediately in the JSON-generator side panel too
       const jsonStr = JSON.stringify(payload, null, 2);
       document.getElementById('json-output').innerHTML = syntaxHighlight(jsonStr);
       const panel = document.getElementById('output-panel');
       panel.classList.remove('hidden');
       document.getElementById('main-scroll').style.marginRight = '420px';
 
-      // Update button state
-      const btn = document.getElementById('submitBtn');
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ Starting...'; }
+      // Disable Submit immediately — it stays disabled through every status
+      // change below until the flow reaches a terminal state.
+      submissionInFlight = true;
+      setSubmitButtonState(true, '⏳ Starting...');
 
-      const titleEl = document.getElementById('apiResponseTitle');
-      const statusEl = document.getElementById('apiStatusBadge');
-      const codeEl = document.getElementById('apiResponseCode');
-      const resPanel = document.getElementById('apiResponsePanel');
-      resPanel.classList.add('show');
-
-      titleEl.textContent = '⏳ Starting automation…';
-      titleEl.style.color = '#f97316';
-      statusEl.innerHTML = '<span style="color:#f97316">Sending…</span>';
-      codeEl.textContent = JSON.stringify(payload, null, 2);
+      openResultOverlay();
+      setStatusCard('⏳ Starting automation…', 'Sending…', '#f97316', jsonStr);
 
       try {
         const res = await fetch(SERVICE_API + '/start', {
@@ -1858,35 +2008,42 @@
         }
 
         const isOk = res.ok && data && data.session_id;
-        titleEl.textContent = isOk ? '✅ Automation Started' : '⚠️ API Response — Error';
-        titleEl.style.color = isOk ? '#22c55e' : '#ef4444';
-        statusEl.innerHTML = `<span style="color:${isOk ? '#22c55e' : '#ef4444'}">HTTP ${httpStatus}</span>`;
-        codeEl.textContent = responseText;
-
         const combined = '// ── REQUEST PAYLOAD ──\n' + jsonStr + '\n\n// ── /start RESPONSE (HTTP ' + httpStatus + ') ──\n' + responseText;
+        setStatusCard(
+          isOk ? '✅ Automation Started' : '⚠️ API Response — Error',
+          'HTTP ' + httpStatus,
+          isOk ? '#22c55e' : '#ef4444',
+          combined
+        );
         document.getElementById('json-output').innerHTML = syntaxHighlight(combined);
 
         if (isOk) {
           currentSessionId = data.session_id;
           showToast('✅ Automation started — awaiting OTPs', 'success');
+          setSubmitButtonState(true, '⏳ Awaiting OTP…');
           openOtpModal();
           startStatusPolling();
         } else {
           showToast('⚠️ Could not start automation — check response', 'error');
+          // /start itself failed — no session was created, so let them retry.
+          submissionInFlight = false;
+          setSubmitButtonState(false, '⚡ Submit to API');
         }
 
       } catch (err) {
-        titleEl.textContent = '❌ Network Error';
-        titleEl.style.color = '#ef4444';
-        statusEl.innerHTML = `<span style="color:#ef4444">Could not reach server</span>`;
-        codeEl.textContent = 'Error: ' + err.message + '\n\nCheck:\n• The automation service is running\n• CORS is enabled on the server';
+        setStatusCard(
+          '❌ Network Error',
+          'Could not reach server',
+          '#ef4444',
+          'Error: ' + err.message + '\n\nCheck:\n• The automation service is running\n• CORS is enabled on the server'
+        );
         showToast('Network error — server not reachable', 'error');
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '⚡ Submit to API'; }
+        submissionInFlight = false;
+        setSubmitButtonState(false, '⚡ Submit to API');
       }
     }
 
-    // ─── STATUS POLLING (/status) ──────────────────────────────────────────────
+    // ─── STATUS POLLING (/status) — drives the LEFT card for every status change ──
     function startStatusPolling() {
       if (statusPollTimer) clearInterval(statusPollTimer);
       statusPollTimer = setInterval(async () => {
@@ -1898,41 +2055,65 @@
             body: JSON.stringify({ session_id: currentSessionId })
           });
           const data = await res.json();
-          const codeEl = document.getElementById('apiResponseCode');
-          const titleEl = document.getElementById('apiResponseTitle');
-          if (codeEl) codeEl.textContent = JSON.stringify(data, null, 2);
-          if (titleEl) titleEl.textContent = '🔄 Status — ' + (data.status || 'in progress');
-          if (data.status && /complete|done|success|fail|error/i.test(data.status)) {
+          const status = data.status || 'in progress';
+          const isTerminal = /complete|done|success|fail|error/i.test(status);
+          const isFail = /fail|error/i.test(status);
+          setStatusCard(
+            '🔄 Status — ' + status,
+            status,
+            isTerminal ? (isFail ? '#ef4444' : '#22c55e') : '#f97316',
+            JSON.stringify(data, null, 2)
+          );
+
+          if (isTerminal) {
             clearInterval(statusPollTimer);
             statusPollTimer = null;
-            showToast(/fail|error/i.test(data.status) ? '⚠️ Registration failed — see status panel' : '✅ Registration complete!', /fail|error/i.test(data.status) ? 'error' : 'success');
+            showToast(isFail ? '⚠️ Registration failed — see status card' : '✅ Registration complete!', isFail ? 'error' : 'success');
+            // Flow has reached a terminal state — Submit can be used again.
+            submissionInFlight = false;
+            setSubmitButtonState(false, '⚡ Submit to API');
+            document.getElementById('reopenStatusBtn').classList.remove('visible');
           }
         } catch (e) {
-          // transient poll errors are ignored; polling continues
+          // transient poll errors are ignored; polling continues — Submit stays disabled
         }
       }, 4000);
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    //  OTP HANDLER (two OTPs — Aadhaar + PAN — submitted to /otp in sequence)
+    //  OTP HANDLER — two OTPs (Aadhaar, then PAN) for the SAME session/payload,
+    //  sent one after another at different points in time. Everything renders
+    //  in the RIGHT card only — nothing is logged to the console.
     // ══════════════════════════════════════════════════════════════════════
     let otpTimerInterval = null;
 
     function openOtpModal() {
       const sessionLabel = document.getElementById('otpSessionLabel');
       if (sessionLabel) sessionLabel.textContent = currentSessionId || '';
-      document.getElementById('otp_input_1').value = '';
-      document.getElementById('otp_input_2').value = '';
+
+      const in1 = document.getElementById('otp_input_1');
+      const in2 = document.getElementById('otp_input_2');
+      in1.value = ''; in2.value = '';
+      in1.disabled = false; in2.disabled = false;
+      document.getElementById('otpSubmitBtn').disabled = false;
+      document.getElementById('otp1_time').textContent = 'Ready to send';
+      document.getElementById('otp1_time').className = 'otp-send-time';
+      document.getElementById('otp2_time').textContent = 'Sent after Aadhaar OTP is verified';
+      document.getElementById('otp2_time').className = 'otp-send-time';
+
       const errEl = document.getElementById('otpError');
       errEl.style.display = 'none';
       errEl.textContent = '';
-      document.getElementById('otpOverlay').classList.add('show');
+      openResultOverlay();
       startOtpTimer(120);
-      document.getElementById('otp_input_1').focus();
+      in1.focus();
     }
 
     function closeOtpModal() {
-      document.getElementById('otpOverlay').classList.remove('show');
+      const in1 = document.getElementById('otp_input_1');
+      const in2 = document.getElementById('otp_input_2');
+      in1.disabled = true; in2.disabled = true;
+      document.getElementById('otpSubmitBtn').disabled = true;
       if (otpTimerInterval) clearInterval(otpTimerInterval);
     }
 
@@ -1957,6 +2138,10 @@
       }, 1000);
     }
 
+    function timeNow() {
+      return new Date().toLocaleTimeString();
+    }
+
     async function postOtp(otp) {
       const res = await fetch(SERVICE_API + '/otp', {
         method: 'POST',
@@ -1976,6 +2161,8 @@
       const otp1 = document.getElementById('otp_input_1').value.trim();
       const otp2 = document.getElementById('otp_input_2').value.trim();
       const errEl = document.getElementById('otpError');
+      const otp1Time = document.getElementById('otp1_time');
+      const otp2Time = document.getElementById('otp2_time');
 
       if (!currentSessionId) {
         errEl.textContent = 'No active session — please submit the form again.';
@@ -1992,17 +2179,30 @@
       btn.disabled = true;
       btn.textContent = 'Verifying…';
       errEl.style.display = 'none';
+      setSubmitButtonState(true, '⏳ Verifying OTPs…');
 
       try {
-        // Aadhaar OTP first, then the PAN verification OTP — both go to the
-        // same /otp endpoint, submitted one after the other for this session.
+        // Same session, same payload — Aadhaar OTP goes first, then the PAN
+        // verification OTP is sent right after, at a later point in time.
+        otp1Time.textContent = 'Sending OTP 1 of 2 (Aadhaar) — ' + timeNow();
+        otp1Time.className = 'otp-send-time sending';
         await postOtp(otp1);
+        otp1Time.textContent = 'Sent & verified ✓ — ' + timeNow();
+        otp1Time.className = 'otp-send-time sent';
+
+        otp2Time.textContent = 'Sending OTP 2 of 2 (PAN) — ' + timeNow();
+        otp2Time.className = 'otp-send-time sending';
         await postOtp(otp2);
+        otp2Time.textContent = 'Sent & verified ✓ — ' + timeNow();
+        otp2Time.className = 'otp-send-time sent';
+
         showToast('✅ Both OTPs verified!', 'success');
         closeOtpModal();
+        setSubmitButtonState(true, '⏳ Processing…'); // status polling is still running
       } catch (err) {
         errEl.textContent = 'OTP verification failed: ' + err.message;
         errEl.style.display = 'block';
+        setSubmitButtonState(true, '⏳ Awaiting OTP…'); // still an active session — let them retry the OTPs
       } finally {
         btn.disabled = false;
         btn.textContent = 'Verify & Continue';
@@ -2010,41 +2210,51 @@
     }
   </script>
 
-  <!-- API Response Panel -->
-  <div class="api-response-panel" id="apiResponsePanel">
-    <div class="api-response-inner">
-      <div class="api-response-title">
-        <span id="apiResponseTitle">🔄 API Response</span>
-        <button class="close-api-panel"
-          onclick="document.getElementById('apiResponsePanel').classList.remove('show')">✕</button>
+  <!-- RESULT OVERLAY — shown right after Submit. LEFT card = live status/response JSON.
+       RIGHT card = OTP verification (Aadhaar OTP, then PAN OTP, same session/payload,
+       sent one after another). Replaces the old bottom console-style panel + separate modal. -->
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-cards">
+
+      <!-- LEFT: STATUS CARD -->
+      <div class="status-card">
+        <div class="status-card-head">
+          <span id="apiResponseTitle">🔄 API Response</span>
+          <button class="close-result-overlay" onclick="closeResultOverlay()">✕</button>
+        </div>
+        <div id="apiStatusBadge" class="status-pill">Waiting…</div>
+        <div class="status-json-label">Response (live)</div>
+        <pre class="api-response-code" id="apiResponseCode">// Submit the form to see live status &amp; response JSON here</pre>
       </div>
-      <div id="apiStatusBadge" style="font-size:12px;margin-bottom:8px;"></div>
-      <pre class="api-response-code" id="apiResponseCode"></pre>
+
+      <!-- RIGHT: OTP CARD -->
+      <div class="otp-card">
+        <div class="otp-pulse-ring">🔐</div>
+        <h2>OTP Verification</h2>
+        <p>Two OTPs are required to continue for session <span id="otpSessionLabel" style="color:#7dd3fc;"></span> —
+          sent one after another for this session: Aadhaar OTP first, then PAN verification OTP.</p>
+        <div class="otp-fields">
+          <div class="otp-field">
+            <label for="otp_input_1">1. Aadhaar OTP</label>
+            <input type="text" id="otp_input_1" maxlength="8" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" disabled>
+            <div class="otp-send-time" id="otp1_time">Waiting for session…</div>
+          </div>
+          <div class="otp-field">
+            <label for="otp_input_2">2. PAN Verification OTP</label>
+            <input type="text" id="otp_input_2" maxlength="8" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" disabled>
+            <div class="otp-send-time" id="otp2_time">Sent after Aadhaar OTP is verified</div>
+          </div>
+        </div>
+        <div class="otp-err" id="otpError"></div>
+        <button class="otp-submit-btn" id="otpSubmitBtn" onclick="submitOtp()" disabled>Verify &amp; Continue</button>
+        <div class="otp-timer-txt" id="otpTimerTxt"></div>
+      </div>
+
     </div>
   </div>
 
-  <!-- OTP MODAL — two OTPs required per session: Aadhaar OTP + PAN verification OTP -->
-  <div class="otp-overlay" id="otpOverlay">
-    <div class="otp-modal">
-      <div class="otp-pulse-ring">🔐</div>
-      <h2>OTP Verification</h2>
-      <p>Two OTPs are required to continue for session <span id="otpSessionLabel" style="color:#7dd3fc;"></span> —
-        one sent to your Aadhaar-linked mobile, one sent for PAN verification.</p>
-      <div class="otp-fields">
-        <div class="otp-field">
-          <label for="otp_input_1">Aadhaar OTP</label>
-          <input type="text" id="otp_input_1" maxlength="8" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••">
-        </div>
-        <div class="otp-field">
-          <label for="otp_input_2">PAN Verification OTP</label>
-          <input type="text" id="otp_input_2" maxlength="8" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••">
-        </div>
-      </div>
-      <div class="otp-err" id="otpError"></div>
-      <button class="otp-submit-btn" id="otpSubmitBtn" onclick="submitOtp()">Verify &amp; Continue</button>
-      <div class="otp-timer-txt" id="otpTimerTxt"></div>
-    </div>
-  </div>
+  <!-- Reopen button — appears once a submission is in progress and the overlay is closed -->
+  <button class="reopen-status-btn" id="reopenStatusBtn" onclick="openResultOverlay()">🔄 View Status</button>
 
 
   <!-- ══════════ REFERENCE DATA PANEL ══════════ -->
