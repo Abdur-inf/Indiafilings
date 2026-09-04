@@ -540,6 +540,36 @@
 
     .toast.error {
       border-left: 4px solid var(--danger);
+      /* Errors pop in the top-right corner of the page instead of bottom-right,
+         and stay put (no auto-timeout) until the person closes them. */
+      top: 28px;
+      bottom: auto;
+      right: 28px;
+      left: auto;
+      transform: translateY(-40px);
+      padding-right: 14px;
+    }
+
+    .toast.error.show {
+      transform: translateY(0);
+    }
+
+    .toast-close-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px 4px;
+      margin-left: 4px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .toast-close-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
     }
 
     .progress-bar {
@@ -1675,11 +1705,27 @@
       generateJSON();
     }
 
+    let toastTimeout = null;
+
     function showToast(msg, type) {
       const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.className = 'toast ' + type + ' show';
-      setTimeout(() => t.classList.remove('show'), 3000);
+      if (toastTimeout) { clearTimeout(toastTimeout); toastTimeout = null; }
+
+      if (type === 'error') {
+        // Errors get a manual close (✕) button and stay open until dismissed.
+        t.innerHTML = '<span>' + msg + '</span><button class="toast-close-btn" onclick="closeToast()" title="Close">✕</button>';
+        t.className = 'toast error show';
+      } else {
+        t.innerHTML = '<span>' + msg + '</span>';
+        t.className = 'toast ' + type + ' show';
+        toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+      }
+    }
+
+    function closeToast() {
+      const t = document.getElementById('toast');
+      t.classList.remove('show');
+      if (toastTimeout) { clearTimeout(toastTimeout); toastTimeout = null; }
     }
 
     function resetForm() {
