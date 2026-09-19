@@ -381,7 +381,7 @@ document.getElementById("start-btn").addEventListener("click", async () => {
       }
       return;
     }
-    beginPolling(body.sessionid);
+    beginPolling(body.session_id);
   } catch (err) {
     errEl.textContent = "Network error: " + err.message;
   }
