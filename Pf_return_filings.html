@@ -73,6 +73,7 @@
       <input id="file-input" type="file" accept=".csv,.xlsx,.xls" class="form-control mb-2">
       <button id="add-row-btn" class="btn btn-sm btn-outline-secondary">+ Add Row</button>
       <span id="upload-error" class="text-danger small ms-2"></span>
+      <p class="text-muted small mt-2 mb-0">DOB / DOJ: Excel date-formatted cells are read automatically; text values may be DD-MM-YYYY, DD/MM/YYYY or YYYY-MM-DD.</p>
     </div>
   </div>
 
@@ -159,7 +160,7 @@ document.getElementById("file-input").addEventListener("change", function (e) {
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
-        const wb = XLSX.read(evt.target.result, { type: "array" });
+        const wb = XLSX.read(evt.target.result, { type: "array", cellDates: true });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
         loadRows(rows);
@@ -178,6 +179,8 @@ function showUploadError(msg) {
   document.getElementById("upload-error").textContent = msg;
 }
 
+const DATE_FIELDS = ["dob", "doj"];
+
 function loadRows(rows) {
   rows = rows.filter(r => r && r.length && r.some(c => String(c).trim() !== ""));
   if (!rows.length) {
@@ -193,13 +196,111 @@ function loadRows(rows) {
     dataRows = rows.slice(1);
   }
 
+  let dateWarning = false;
+
   const members = dataRows.map(row => {
     const m = {};
-    FIELD_ORDER.forEach((field, i) => { m[field] = (row[i] !== undefined ? String(row[i]).trim() : ""); });
+    FIELD_ORDER.forEach((field, i) => {
+      const raw = row[i];
+      if (DATE_FIELDS.includes(field)) {
+        const formatted = formatDateField(raw);
+        if (formatted === null) dateWarning = true;
+        m[field] = formatted !== null ? formatted : (raw !== undefined ? String(raw).trim() : "");
+      } else {
+        m[field] = (raw !== undefined ? String(raw).trim() : "");
+      }
+    });
     return m;
   });
 
+  if (dateWarning) {
+    showUploadError("Some DOB/DOJ values couldn't be recognized as dates and were left as-is -- please check the highlighted rows.");
+  }
+
   renderTable(members);
+}
+
+// ---------------------------------------------------------------------
+// Date normalization for DOB / DOJ columns.
+// Excel cells that are date-formatted arrive as JS Date objects (we
+// read the workbook with cellDates:true). Plain numeric serials (a
+// date-formatted-looking cell that Excel didn't tag as a date) and
+// common text date formats are also handled. Everything is normalized
+// to DD-MM-YYYY. Returns null if the value couldn't be recognized.
+// ---------------------------------------------------------------------
+function formatDateField(raw) {
+  if (raw === undefined || raw === null || String(raw).trim() === "") return "";
+
+  // Case 1: SheetJS already gave us a real Date object.
+  if (raw instanceof Date && !isNaN(raw.getTime())) {
+    return toDDMMYYYY(raw);
+  }
+
+  // Case 2: bare Excel serial number (e.g. cell typed as General but
+  // holding a date serial -- common when a formula wrote the value).
+  if (typeof raw === "number" && isFinite(raw) && raw > 0) {
+    const d = excelSerialToDate(raw);
+    if (d && !isNaN(d.getTime())) return toDDMMYYYY(d);
+  }
+
+  // Case 3: text value -- try common written formats.
+  const s = String(raw).trim();
+  const normalized = normalizeDateString(s);
+  if (normalized) return normalized;
+
+  // Case 4: numeric-looking string that's actually a serial (CSV
+  // export of an Excel date column often looks like "45231").
+  if (/^\d{4,6}(\.\d+)?$/.test(s)) {
+    const d = excelSerialToDate(parseFloat(s));
+    if (d && !isNaN(d.getTime())) return toDDMMYYYY(d);
+  }
+
+  return null; // unrecognized -- caller falls back to raw text and flags a warning
+}
+
+function excelSerialToDate(serial) {
+  // Excel's day-0 is 1899-12-30 (accounting for the 1900 leap-year bug).
+  const utcDays = Math.floor(serial - 25569);
+  const utcMs = utcDays * 86400 * 1000;
+  const date = new Date(utcMs);
+  // Preserve any fractional time-of-day component, if present.
+  const fraction = serial - Math.floor(serial);
+  if (fraction > 0) date.setMilliseconds(date.getMilliseconds() + Math.round(fraction * 86400 * 1000));
+  return date;
+}
+
+function toDDMMYYYY(d) {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
+function normalizeDateString(s) {
+  if (!s) return null;
+  let m;
+  // DD-MM-YYYY or D-M-YYYY
+  m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) return safeDMY(m[1], m[2], m[3]);
+  // DD/MM/YYYY or D/M/YYYY
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return safeDMY(m[1], m[2], m[3]);
+  // DD.MM.YYYY
+  m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (m) return safeDMY(m[1], m[2], m[3]);
+  // ISO: YYYY-MM-DD
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return safeDMY(m[3], m[2], m[1]);
+  // YYYY/MM/DD
+  m = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (m) return safeDMY(m[3], m[2], m[1]);
+  return null;
+}
+
+function safeDMY(d, mo, y) {
+  const dd = parseInt(d, 10), mm = parseInt(mo, 10), yyyy = parseInt(y, 10);
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+  return `${String(dd).padStart(2, "0")}-${String(mm).padStart(2, "0")}-${yyyy}`;
 }
 
 // ---------------------------------------------------------------------
@@ -399,7 +500,7 @@ function beginPolling(sessionId) {
       const res = await fetch(`${SERVICE_NAME}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
+        body: JSON.stringify({ session_id: sessionId, view: "logs" }),
       });
       const body = await res.json();
       if (!res.ok) return;
@@ -432,7 +533,7 @@ function beginPolling(sessionId) {
   }
 
   poll();
-  pollTimer = setInterval(poll, 2000);
+  pollTimer = setInterval(poll, 5000);
 }
 </script>
 </body>
