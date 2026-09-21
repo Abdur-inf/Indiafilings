@@ -178,7 +178,7 @@
             try {
                 // If running locally via file:// protocol, use proxy. If using a local server, direct url can work if backend allows.
                 const targetUrl = window.location.protocol === 'file:'
-                    ? 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://indiafilings-automation-req.onrender.com/ITR/login')
+                    ? 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://f7ks8r5m-5001.inc1.devtunnels.ms/ITR/login')
                     : 'https://indiafilings-automation-req.onrender.com/ITR/login';
 
                 const response = await fetch(targetUrl, {
